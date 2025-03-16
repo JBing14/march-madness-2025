@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>March Madness 2025</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bracket.js@1.0.0/dist/bracket.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>March Madness 2025</h1>
+  </header>
+  <main>
+    <form id="userForm">
+      <input type="text" id="name" placeholder="Your Name" required>
+      <input type="email" id="email" placeholder="Your Email" required>
+      <button type="submit">Submit Bracket</button>
+    </form>
+    <div id="bracket"></div>
+    <div id="leaderboard"></div>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
