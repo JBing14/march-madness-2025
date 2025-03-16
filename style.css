@@ -46,12 +46,42 @@ button {
 button:hover {
   background: #00205b;
 }
-#bracket {
+.bracket-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 20px 0;
+}
+.bracket-half {
+  width: 48%;
   background: rgba(255, 255, 255, 0.9);
-  padding: 20px;
+  padding: 10px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;
+}
+.final-game {
+  text-align: center;
+  width: 10%;
+}
+#final-matchup {
+  margin-top: 10px;
+}
+.final-team {
+  display: block;
+  padding: 5px;
+  margin: 5px 0;
+  background: #fff;
+  cursor: pointer;
+  border-radius: 5px;
+}
+.final-team.winner {
+  background: #003087;
+  color: white;
+}
+.vs {
+  margin: 0 5px;
 }
 #leaderboard {
   margin-top: 20px;
@@ -60,22 +90,9 @@ button:hover {
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-th, td {
-  padding: 10px;
-  text-align: left;
-}
-th {
-  background: #003087;
-  color: white;
-}
-tr:nth-child(even) { background: #f5f5f5; }
-a { color: #003087; text-decoration: none; }
-a:hover { text-decoration: underline; }
-@media (max-width: 600px) {
+@media (max-width: 800px) {
   form { flex-direction: column; }
   input, button { width: 100%; }
+  .bracket-container { flex-direction: column; }
+  .bracket-half, .final-game { width: 100%; margin-bottom: 20px; }
 }
