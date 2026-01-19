@@ -1,48 +1,34 @@
-import { db } from "./firebase.js";
-
-/* ==============================
-   TOURNAMENT DATA
-================================ */
-
-const tournament = {
-  regions: {
-    east: [
-      ["Auburn", "Alabama St"],
-      ["Louisville", "Creighton"],
-      ["Michigan", "UC San Diego"],
-      ["Texas A&M", "Yale"],
-      ["Ole Miss", "San Diego St"],
-      ["Iowa St", "Lipscomb"],
-      ["Marquette", "New Mexico"],
-      ["Michigan St", "Bryant"]
-    ]
-  }
-};
-
-/* ==============================
-   RENDER BRACKET
-================================ */
-
-function renderBracket() {
+document.addEventListener("DOMContentLoaded", () => {
   const bracketEl = document.getElementById("bracket");
   bracketEl.innerHTML = "";
 
-  Object.entries(tournament.regions).forEach(([region, games]) => {
-    const regionEl = document.createElement("div");
-    regionEl.className = "region";
-    regionEl.innerHTML = `<h2>${region.toUpperCase()}</h2>`;
+  // ----- DATA -----
+  const round1 = [
+    ["Auburn", "Alabama St"],
+    ["Louisville", "Creighton"],
+    ["Michigan", "UC San Diego"],
+    ["Texas A&M", "Yale"],
+    ["Ole Miss", "San Diego St"],
+    ["Iowa St", "Lipscomb"],
+    ["Marquette", "New Mexico"],
+    ["Michigan St", "Bryant"]
+  ];
 
-    let currentRound = games;
+  const rounds = [round1, [], [], [], []]; // R1 → Champion
 
-    let roundNumber = 1;
+  // ----- RENDER -----
+  function render() {
+    bracketEl.innerHTML = "";
 
-    while (currentRound.length > 1) {
+    rounds.forEach((round, roundIndex) => {
+      if (round.length === 0) return;
+
       const roundEl = document.createElement("div");
-      roundEl.className = `round round-${roundNumber}`;
+      roundEl.className = "round";
 
-      const nextRound = [];
+      round.forEach((matchup, matchupIndex) => {
+        if (!matchup || matchup.length < 2) return;
 
-      currentRound.forEach((matchup, index) => {
         const matchupEl = document.createElement("div");
         matchupEl.className = "matchup";
 
@@ -51,24 +37,31 @@ function renderBracket() {
           btn.className = "team";
           btn.textContent = team;
 
-          btn.addEventListener("click", () => {
-            // clear selection in this matchup
+          btn.onclick = () => {
+            // Select winner in this matchup
             matchupEl.querySelectorAll(".team").forEach(b =>
               b.classList.remove("selected")
             );
             btn.classList.add("selected");
 
-            // advance winner
-            const targetIndex = Math.floor(index / 2);
+            // Advance winner
+            const nextRoundIndex = roundIndex + 1;
+            const nextMatchupIndex = Math.floor(matchupIndex / 2);
+            const slotIndex = matchupIndex % 2;
 
-            if (!nextRound[targetIndex]) {
-              nextRound[targetIndex] = [];
+            if (!rounds[nextRoundIndex][nextMatchupIndex]) {
+              rounds[nextRoundIndex][nextMatchupIndex] = [];
             }
 
-            nextRound[targetIndex][index % 2] = team;
+            rounds[nextRoundIndex][nextMatchupIndex][slotIndex] = team;
 
-            renderNextRounds(regionEl, roundNumber + 1, nextRound);
-          });
+            // Clear deeper rounds
+            for (let i = nextRoundIndex + 1; i < rounds.length; i++) {
+              rounds[i] = [];
+            }
+
+            render();
+          };
 
           matchupEl.appendChild(btn);
         });
@@ -76,76 +69,9 @@ function renderBracket() {
         roundEl.appendChild(matchupEl);
       });
 
-      regionEl.appendChild(roundEl);
-
-      currentRound = nextRound;
-      roundNumber++;
-    }
-
-    bracketEl.appendChild(regionEl);
-  });
-}
-
-/* ==============================
-   RENDER FUTURE ROUNDS
-================================ */
-
-function renderNextRounds(regionEl, startRound, rounds) {
-  // remove existing future rounds
-  Array.from(regionEl.querySelectorAll(".round")).forEach(round => {
-    if (Number(round.className.match(/round-(\d+)/)[1]) >= startRound) {
-      round.remove();
-    }
-  });
-
-  let roundNumber = startRound;
-  let current = rounds;
-
-  while (current.length && current.length >= 1) {
-    const roundEl = document.createElement("div");
-    roundEl.className = `round round-${roundNumber}`;
-
-    const next = [];
-
-    current.forEach((matchup, index) => {
-      if (!matchup || matchup.length < 2) return;
-
-      const matchupEl = document.createElement("div");
-      matchupEl.className = "matchup";
-
-      matchup.forEach(team => {
-        const btn = document.createElement("button");
-        btn.className = "team";
-        btn.textContent = team;
-
-        btn.addEventListener("click", () => {
-          matchupEl.querySelectorAll(".team").forEach(b =>
-            b.classList.remove("selected")
-          );
-          btn.classList.add("selected");
-
-          const targetIndex = Math.floor(index / 2);
-          if (!next[targetIndex]) next[targetIndex] = [];
-          next[targetIndex][index % 2] = team;
-
-          renderNextRounds(regionEl, roundNumber + 1, next);
-        });
-
-        matchupEl.appendChild(btn);
-      });
-
-      roundEl.appendChild(matchupEl);
+      bracketEl.appendChild(roundEl);
     });
-
-    regionEl.appendChild(roundEl);
-
-    current = next;
-    roundNumber++;
   }
-}
 
-/* ==============================
-   INIT
-================================ */
-
-document.addEventListener("DOMContentLoaded", renderBracket);
+  render();
+});
