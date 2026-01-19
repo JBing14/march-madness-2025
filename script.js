@@ -3,7 +3,10 @@ import {
   getFirestore,
   collection,
   addDoc,
-  serverTimestamp
+  serverTimestamp,
+  query,
+  where,
+  getDocs
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 /* ================= FIREBASE ================= */
@@ -41,17 +44,12 @@ const round2 = Array.from({ length: 4 }, () => [null, null]);
 const round3 = Array.from({ length: 2 }, () => [null, null]);
 const round4 = [[null, null]];
 
-const picks = {
-  round1: {},
-  round2: {},
-  round3: {},
-  round4: {}
-};
+const picks = { round1: {}, round2: {}, round3: {}, round4: {} };
 
 /* ================= RENDER ================= */
 
 function renderRound(container, data, onPick) {
-  container.innerHTML = `<strong>${container.firstChild.textContent}</strong>`;
+  container.innerHTML = `<strong>${container.dataset.title}</strong>`;
 
   data.forEach((m, i) => {
     const div = document.createElement("div");
@@ -62,11 +60,7 @@ function renderRound(container, data, onPick) {
       btn.className = "team";
       btn.textContent = team || "";
       btn.disabled = !team || locked;
-
-      if (team && onPick) {
-        btn.onclick = () => onPick(i, team);
-      }
-
+      if (team && onPick) btn.onclick = () => onPick(i, team);
       div.appendChild(btn);
     });
 
@@ -78,7 +72,6 @@ function renderChampion() {
   const c = document.getElementById("champion");
   c.innerHTML = "<strong>Champion</strong>";
   if (!champion) return;
-
   const btn = document.createElement("button");
   btn.className = "team champion";
   btn.textContent = champion;
@@ -101,7 +94,6 @@ function clearRound(r) {
 }
 
 function pickRound1(i, team) {
-  if (locked) return;
   picks.round1[`game${i + 1}`] = team;
   round2[Math.floor(i / 2)][i % 2] = team;
   clearRound(round3); clearRound(round4); champion = null;
@@ -109,7 +101,6 @@ function pickRound1(i, team) {
 }
 
 function pickRound2(i, team) {
-  if (locked) return;
   picks.round2[`game${i + 1}`] = team;
   round3[Math.floor(i / 2)][i % 2] = team;
   clearRound(round4); champion = null;
@@ -117,7 +108,6 @@ function pickRound2(i, team) {
 }
 
 function pickRound3(i, team) {
-  if (locked) return;
   picks.round3[`game${i + 1}`] = team;
   round4[0][i] = team;
   champion = null;
@@ -125,7 +115,6 @@ function pickRound3(i, team) {
 }
 
 function pickRound4(_, team) {
-  if (locked) return;
   picks.round4.game1 = team;
   champion = team;
   render();
@@ -136,8 +125,6 @@ function pickRound4(_, team) {
 document.getElementById("submitBtn").onclick = submitBracket;
 
 async function submitBracket() {
-  console.log("SUBMIT CLICKED");
-
   if (locked) return;
 
   const name = document.getElementById("name").value.trim();
@@ -149,7 +136,9 @@ async function submitBracket() {
     return;
   }
 
-  locked = true;
+  const q = query(collection(db, "brackets"), where("email", "==", email));
+  const snap = await getDocs(q);
+  const entryNumber = snap.size + 1;
 
   function serialize(round, roundPicks) {
     const out = {};
@@ -163,9 +152,12 @@ async function submitBracket() {
     return out;
   }
 
+  locked = true;
+
   await addDoc(collection(db, "brackets"), {
     name,
     email,
+    entryName: `${name} ${entryNumber}`,
     tiebreaker: Number(tiebreaker),
     submittedAt: serverTimestamp(),
     picks: {
@@ -183,5 +175,8 @@ async function submitBracket() {
 
 /* ================= INIT ================= */
 
+document.getElementById("round1").dataset.title = "Round 1";
+document.getElementById("round2").dataset.title = "Round 2";
+document.getElementById("round3").dataset.title = "Round 3";
+document.getElementById("round4").dataset.title = "Final";
 render();
-
