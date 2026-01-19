@@ -61,4 +61,18 @@ body {
 .team.empty {
   visibility: hidden;
 }
+.submission-form {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.submission-form input,
+.submission-form button {
+  padding: 8px;
+  font-size: 14px;
+}
+
 
