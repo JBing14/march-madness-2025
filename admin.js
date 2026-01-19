@@ -17,7 +17,7 @@ import {
 ========================= */
 
 // 🔒 CHANGE THIS TO YOUR ADMIN EMAIL
-const ADMIN_EMAIL = "your_admin_email@example.com";
+const ADMIN_EMAIL = "jbgerloff@gmail.com";
 
 /* =========================
    DOM ELEMENTS
@@ -108,3 +108,4 @@ async function loadSubmissions() {
     tableBody.appendChild(tr);
   });
 }
+
