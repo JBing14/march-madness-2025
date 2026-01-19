@@ -1,98 +1,64 @@
 body {
-  font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg, #003087, #ffffff);
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
   margin: 0;
   padding: 20px;
-  color: #333;
 }
-header {
+
+.title {
   text-align: center;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-h1 {
-  color: #003087;
-  margin: 0;
-  font-size: 2.5em;
-}
-main {
-  max-width: 1200px;
-  margin: 20px auto;
-}
-form {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
   margin-bottom: 20px;
 }
-input, button {
-  padding: 12px;
-  font-size: 16px;
-  border: none;
-  border-radius: 5px;
-  transition: all 0.3s;
-}
-input {
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-button {
-  background: #003087;
-  color: white;
-  cursor: pointer;
-}
-button:hover {
-  background: #00205b;
-}
-.bracket-container {
+
+.bracket {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 100%;
+  justify-content: center;
+  gap: 40px;
   overflow-x: auto;
-  margin: 20px 0;
 }
-.bracket-half {
-  width: 48%;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 10px;
+
+.region {
+  background: white;
+  padding: 15px;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  min-width: 300px;
 }
-.final-game {
+
+.region h2 {
   text-align: center;
-  width: 10%;
+  margin-bottom: 10px;
 }
-#final-matchup {
-  margin-top: 10px;
+
+.round {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
-.final-team {
-  display: block;
-  padding: 5px;
-  margin: 5px 0;
+
+.round-1 { margin-bottom: 20px; }
+.round-2 { margin-bottom: 30px; }
+.round-3 { margin-bottom: 40px; }
+
+.matchup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.team {
+  padding: 8px;
+  border: 1px solid #ccc;
   background: #fff;
   cursor: pointer;
+  text-align: left;
   border-radius: 5px;
 }
-.final-team.winner {
-  background: #003087;
-  color: white;
+
+.team:hover {
+  background: #e8f0ff;
 }
-.vs {
-  margin: 0 5px;
+
+.team.empty {
+  visibility: hidden;
 }
-#leaderboard {
-  margin-top: 20px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-@media (max-width: 800px) {
-  form { flex-direction: column; }
-  input, button { width: 100%; }
-  .bracket-container { flex-direction: column; }
-  .bracket-half, .final-game { width: 100%; margin-bottom: 20px; }
-}
+
