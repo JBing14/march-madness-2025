@@ -5,40 +5,46 @@
   <title>March Madness Bracket</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="style.css" />
-
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
     }
 
+    .bracket {
+      display: flex;
+      gap: 20px;
+    }
+
     .round {
-      display: inline-block;
-      vertical-align: top;
-      margin-right: 20px;
-      min-width: 150px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .matchup {
-      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
     .team {
-      display: block;
-      width: 100%;
-      margin-bottom: 4px;
       padding: 6px;
       cursor: pointer;
     }
 
     .team:disabled {
-      cursor: default;
-      opacity: 0.5;
+      cursor: not-allowed;
+      opacity: 0.6;
     }
 
-    #form {
-      margin-bottom: 30px;
+    .champion {
+      font-weight: bold;
+      background: #dff0d8;
+    }
+
+    .form {
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -47,26 +53,22 @@
 
 <h1>March Madness Bracket</h1>
 
-<div id="form">
-  <input type="text" id="name" placeholder="Your Name" />
-  <br /><br />
-  <input type="email" id="email" placeholder="Your Email" />
-  <br /><br />
-  <input type="number" id="tiebreaker" placeholder="Championship Total Points" />
-  <br /><br />
-  <button onclick="submitBracket()">Submit Bracket</button>
+<div class="bracket">
+  <div class="round" id="round1"><strong>Round 1</strong></div>
+  <div class="round" id="round2"><strong>Round 2</strong></div>
+  <div class="round" id="round3"><strong>Round 3</strong></div>
+  <div class="round" id="round4"><strong>Final</strong></div>
+  <div class="round" id="champion"><strong>Champion</strong></div>
 </div>
 
-<div id="bracket">
-  <div class="round" id="round-1-left"><strong>Round 1</strong></div>
-  <div class="round" id="round-2-left"><strong>Round 2</strong></div>
-  <div class="round" id="round-3-left"><strong>Sweet 16</strong></div>
-  <div class="round" id="round-4-left"><strong>Elite 8</strong></div>
-  <div class="round" id="round-5-left"><strong>Champion</strong></div>
+<div class="form">
+  <input id="name" placeholder="Name" />
+  <input id="email" placeholder="Email" />
+  <input id="tiebreaker" placeholder="Championship Total Score" type="number" />
+  <br /><br />
+  <button id="submitBtn">Submit Bracket</button>
 </div>
 
 <script type="module" src="script.js"></script>
-
 </body>
 </html>
-
