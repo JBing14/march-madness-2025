@@ -1,5 +1,6 @@
-import { db } from "./firebase.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
 import {
+  getFirestore,
   collection,
   addDoc,
   query,
@@ -8,24 +9,50 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+/* =========================
+   FIREBASE INIT
+========================= */
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* =========================
+   DOM READY
+========================= */
+
 document.addEventListener("DOMContentLoaded", function () {
 
-  var round1El = document.getElementById("round-1-left");
-  var round2El = document.getElementById("round-2-left");
-  var round3El = document.getElementById("round-3-left");
-  var round4El = document.getElementById("round-4-left");
-  var champEl  = document.getElementById("round-5-left");
+  /* =========================
+     ELEMENTS
+  ========================= */
+
+  const round1El = document.getElementById("round-1-left");
+  const round2El = document.getElementById("round-2-left");
+  const round3El = document.getElementById("round-3-left");
+  const round4El = document.getElementById("round-4-left");
+  const champEl  = document.getElementById("round-5-left");
 
   if (!round1El || !round2El || !round3El || !round4El || !champEl) {
-    console.error("One or more round containers are missing");
+    console.error("Missing round containers");
     return;
   }
 
-  var isLocked = false;
+  let isLocked = false;
 
-  // ---------------- STATE ----------------
+  /* =========================
+     STATE
+  ========================= */
 
-  var round1 = [
+  const round1 = [
     ["Auburn", "Alabama St"],
     ["Louisville", "Creighton"],
     ["Michigan", "UC San Diego"],
@@ -36,72 +63,53 @@ document.addEventListener("DOMContentLoaded", function () {
     ["Michigan St", "Bryant"]
   ];
 
-  var round2 = [
-    [null, null],
-    [null, null],
-    [null, null],
-    [null, null]
-  ];
+  const round2 = Array(4).fill(null).map(() => [null, null]);
+  const round3 = Array(2).fill(null).map(() => [null, null]);
+  const round4 = [[null, null]];
 
-  var round3 = [
-    [null, null],
-    [null, null]
-  ];
+  let champion = null;
 
-  var round4 = [
-    [null, null]
-  ];
-
-  var champion = null;
-
-  // ---------------- RENDER ----------------
+  /* =========================
+     RENDERING
+  ========================= */
 
   function renderRound(container, matchups, handler) {
-    container.innerHTML = "<strong>" + container.querySelector("strong").innerText + "</strong>";
+    const header = container.querySelector("strong");
+    container.innerHTML = "";
+    if (header) container.appendChild(header);
 
-    for (var i = 0; i < matchups.length; i++) {
-      var matchup = matchups[i];
-      var matchEl = document.createElement("div");
+    matchups.forEach((matchup, mi) => {
+      const matchEl = document.createElement("div");
       matchEl.className = "matchup";
 
-      for (var j = 0; j < matchup.length; j++) {
-        var team = matchup[j];
-        var btn = document.createElement("button");
+      matchup.forEach((team, si) => {
+        const btn = document.createElement("button");
         btn.className = "team";
-        btn.textContent = team ? team : "";
+        btn.textContent = team || "";
 
         if (team && handler && !isLocked) {
-          btn.onclick = (function (mi, si, t) {
-            return function () {
-              handler(mi, si, t);
-            };
-          })(i, j, team);
+          btn.onclick = () => handler(mi, si, team);
         } else {
           btn.disabled = true;
         }
 
         matchEl.appendChild(btn);
-      }
+      });
 
       container.appendChild(matchEl);
-    }
+    });
   }
 
   function renderChampion() {
     champEl.innerHTML = "<strong>Champion</strong>";
-
     if (!champion) return;
 
-    var matchEl = document.createElement("div");
-    matchEl.className = "matchup";
-
-    var btn = document.createElement("button");
-    btn.className = "team";
+    const btn = document.createElement("button");
+    btn.className = "team champion";
     btn.textContent = champion;
     btn.disabled = true;
 
-    matchEl.appendChild(btn);
-    champEl.appendChild(matchEl);
+    champEl.appendChild(btn);
   }
 
   function render() {
@@ -112,108 +120,91 @@ document.addEventListener("DOMContentLoaded", function () {
     renderChampion();
   }
 
-  // ---------------- LOGIC ----------------
+  /* =========================
+     LOGIC
+  ========================= */
 
-  function clearRound(r) {
-    for (var i = 0; i < r.length; i++) {
-      r[i][0] = null;
-      r[i][1] = null;
-    }
+  function clearRound(round) {
+    round.forEach(m => {
+      m[0] = null;
+      m[1] = null;
+    });
   }
 
-  function handleRound1Pick(matchupIndex, slotIndex, team) {
+  function handleRound1Pick(i, j, team) {
     if (isLocked) return;
-
-    var r2Matchup = Math.floor(matchupIndex / 2);
-    var r2Slot = matchupIndex % 2;
-
-    round2[r2Matchup][r2Slot] = team;
+    round2[Math.floor(i / 2)][i % 2] = team;
     clearRound(round3);
     clearRound(round4);
     champion = null;
-
     render();
   }
 
-  function handleRound2Pick(matchupIndex, slotIndex, team) {
+  function handleRound2Pick(i, j, team) {
     if (isLocked) return;
-
-    var r3Matchup = Math.floor(matchupIndex / 2);
-    var r3Slot = matchupIndex % 2;
-
-    round3[r3Matchup][r3Slot] = team;
+    round3[Math.floor(i / 2)][i % 2] = team;
     clearRound(round4);
     champion = null;
-
     render();
   }
 
-  function handleRound3Pick(matchupIndex, slotIndex, team) {
+  function handleRound3Pick(i, j, team) {
     if (isLocked) return;
-
-    round4[0][matchupIndex] = team;
+    round4[0][i] = team;
     champion = null;
-
     render();
   }
 
-  function handleRound4Pick(matchupIndex, slotIndex, team) {
+  function handleRound4Pick(i, j, team) {
     if (isLocked) return;
-
     champion = team;
     render();
   }
 
-  // ---------------- SUBMISSION ----------------
+  /* =========================
+     SUBMIT (GLOBAL)
+  ========================= */
 
- window.submitBracket = async function () {
-  if (isLocked) return;
+  window.submitBracket = async function () {
+    if (isLocked) return;
 
-  var name = document.getElementById("name").value.trim();
-  var email = document.getElementById("email").value.trim();
-  var tiebreaker = document.getElementById("tiebreaker").value.trim();
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const tiebreaker = document.getElementById("tiebreaker").value.trim();
 
-  if (!name || !email || !tiebreaker) {
-    alert("Please enter name, email, and tiebreaker.");
-    return;
-  }
-
-  if (!champion) {
-    alert("Please complete the bracket before submitting.");
-    return;
-  }
-
-  isLocked = true;
-
-  // ---- Determine entry number (John Doe 1, 2, etc.) ----
-  const q = query(
-    collection(db, "brackets"),
-    where("email", "==", email)
-  );
-
-  const snapshot = await getDocs(q);
-  const entryNumber = snapshot.size + 1;
-
-  const submission = {
-    name: name,
-    email: email,
-    entryName: `${name} ${entryNumber}`,
-    tiebreaker: Number(tiebreaker),
-    submittedAt: serverTimestamp(),
-    picks: {
-      round1: round1,
-      round2: round2,
-      round3: round3,
-      round4: round4,
-      champion: champion
+    if (!name || !email || !tiebreaker) {
+      alert("Fill out all fields.");
+      return;
     }
+
+    if (!champion) {
+      alert("Complete the bracket.");
+      return;
+    }
+
+    isLocked = true;
+
+    const q = query(collection(db, "brackets"), where("email", "==", email));
+    const snap = await getDocs(q);
+    const entryNumber = snap.size + 1;
+
+    await addDoc(collection(db, "brackets"), {
+      name,
+      email,
+      entryName: `${name} ${entryNumber}`,
+      tiebreaker: Number(tiebreaker),
+      submittedAt: serverTimestamp(),
+      picks: { round1, round2, round3, round4, champion }
+    });
+
+    alert("Bracket submitted!");
+    render();
   };
 
-  await addDoc(collection(db, "brackets"), submission);
+  /* =========================
+     INIT
+  ========================= */
 
-  alert("Bracket submitted and saved!");
   render();
-};
 
-
-
+});
