@@ -292,3 +292,42 @@ document.getElementById('submitBtn').onclick = async () => {
 };
 
 renderBracket();
+/* =====================================================
+   CLICK + SELECTION PATCH (NON-DESTRUCTIVE)
+   This does NOT replace existing logic.
+   It only ensures clicks hit the correct slot
+   and adds visual feedback.
+===================================================== */
+
+(function () {
+  // Prevent duplicate binding
+  if (window.__slotPatchApplied) return;
+  window.__slotPatchApplied = true;
+
+  // Delegate clicks safely (handles overlap issues)
+  document.addEventListener("click", function (e) {
+    const slot = e.target.closest(".slot");
+    if (!slot) return;
+
+    // Ignore empty / disabled slots
+    if (slot.classList.contains("empty")) return;
+
+    // Visual: only one selected per match
+    const match = slot.closest(".match");
+    if (match) {
+      match.querySelectorAll(".slot").forEach(s =>
+        s.classList.remove("selected")
+      );
+    }
+
+    slot.classList.add("selected");
+
+    // IMPORTANT:
+    // If your existing logic already bound click handlers,
+    // we manually trigger them safely.
+    if (typeof slot.onclick === "function") {
+      slot.onclick();
+    }
+  });
+})();
+
