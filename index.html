@@ -3,24 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <title>March Madness Bracket</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    .round {
+      display: inline-block;
+      vertical-align: top;
+      margin-right: 20px;
+      min-width: 150px;
+    }
+
+    .matchup {
+      margin-bottom: 16px;
+    }
+
+    .team {
+      display: block;
+      width: 100%;
+      margin-bottom: 4px;
+      padding: 6px;
+      cursor: pointer;
+    }
+
+    .team:disabled {
+      cursor: default;
+      opacity: 0.5;
+    }
+
+    #form {
+      margin-bottom: 30px;
+    }
+  </style>
 </head>
 
 <body>
-  <h1>March Madness Bracket</h1>
 
-  <div id="bracket">
-    <div class="round round-1 left" id="round-1-left"></div>
-<div class="round round-2 left" id="round-2-left"></div>
-<div class="round round-3 left" id="round-3-left"></div>
-<div class="round round-4 left" id="round-4-left"></div>
-<div class="round round-5 left" id="round-5-left"></div>
+<h1>March Madness Bracket</h1>
 
-  </div>
+<div id="form">
+  <input type="text" id="name" placeholder="Your Name" />
+  <br /><br />
+  <input type="email" id="email" placeholder="Your Email" />
+  <br /><br />
+  <input type="number" id="tiebreaker" placeholder="Championship Total Points" />
+  <br /><br />
+  <button onclick="submitBracket()">Submit Bracket</button>
+</div>
 
-  <script src="script.js"></script>
+<div id="bracket">
+  <div class="round" id="round-1-left"><strong>Round 1</strong></div>
+  <div class="round" id="round-2-left"><strong>Round 2</strong></div>
+  <div class="round" id="round-3-left"><strong>Sweet 16</strong></div>
+  <div class="round" id="round-4-left"><strong>Elite 8</strong></div>
+  <div class="round" id="round-5-left"><strong>Champion</strong></div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
-
-
-
