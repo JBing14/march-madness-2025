@@ -1,92 +1,51 @@
 body {
   font-family: Arial, sans-serif;
-  background: #f5f5f5;
-  margin: 0;
-  padding: 20px;
 }
 
 .title {
   text-align: center;
-  margin-bottom: 20px;
 }
 
 .bracket {
   display: flex;
-  justify-content: center;
-  gap: 40px;
-  overflow-x: auto;
+  justify-content: space-between;
+}
+
+.side {
+  width: 48%;
+  display: flex;
+  flex-direction: column;
 }
 
 .region {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  min-width: 300px;
+  margin-bottom: 40px;
 }
 
-.region h2 {
-  text-align: center;
+.round {
+  display: flex;
+  flex-wrap: wrap;
   margin-bottom: 10px;
 }
 
-.round {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.round-1 { margin-bottom: 20px; }
-.round-2 { margin-bottom: 30px; }
-.round-3 { margin-bottom: 40px; }
-
-.matchup {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.team {
-  padding: 8px;
-  border: 1px solid #ccc;
-  background: #fff;
+.slot {
+  width: 48%;
+  margin: 1%;
+  padding: 6px;
+  border: 1px solid #333;
   cursor: pointer;
-  text-align: left;
-  border-radius: 5px;
 }
 
-.team:hover {
-  background: #e8f0ff;
+.slot.empty {
+  background: #eee;
+  cursor: default;
 }
 
-.team.empty {
-  visibility: hidden;
-}
-.submission-form {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
+.submit {
+  margin-top: 20px;
+  text-align: center;
 }
 
-.submission-form input,
-.submission-form button {
-  padding: 8px;
-  font-size: 14px;
-}
-
-.round {
-  position: relative;
-  z-index: 1;
-}
-
-.round-5,
-#round-5-left {
-  z-index: 0;
+.locked .slot {
   pointer-events: none;
+  opacity: 0.6;
 }
-
-.round-4 .team {
-  pointer-events: auto;
-}
-
