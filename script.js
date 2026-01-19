@@ -22,13 +22,15 @@ function clearDownstream(region, round, game) {
   }
 }
 function handlePick(teamBtn) {
-  // Only block clicks on truly empty slots
   if (teamBtn.classList.contains("empty") && teamBtn.textContent === "") return;
 
   const region = teamBtn.dataset.region;
   const round = Number(teamBtn.dataset.round);
   const game = Number(teamBtn.dataset.game);
   const teamName = teamBtn.textContent;
+
+  // Clear everything downstream first
+  clearDownstream(region, round, game);
 
   const nextRound = round + 1;
   const nextGame = Math.ceil(game / 2);
@@ -39,7 +41,7 @@ function handlePick(teamBtn) {
 
   if (!targetSlots.length) return;
 
-  // Clear next round matchup
+  // Clear current next-round matchup
   targetSlots.forEach(slot => {
     slot.textContent = "";
     slot.classList.add("empty");
@@ -49,4 +51,5 @@ function handlePick(teamBtn) {
   targetSlots[0].textContent = teamName;
   targetSlots[0].classList.remove("empty");
 }
+
 
