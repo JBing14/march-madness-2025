@@ -63,8 +63,8 @@ document.addEventListener("DOMContentLoaded", function () {
     ["Michigan St", "Bryant"]
   ];
 
-  const round2 = Array(4).fill(null).map(() => [null, null]);
-  const round3 = Array(2).fill(null).map(() => [null, null]);
+  const round2 = Array.from({ length: 4 }, () => [null, null]);
+  const round3 = Array.from({ length: 2 }, () => [null, null]);
   const round4 = [[null, null]];
 
   let champion = null;
@@ -78,17 +78,17 @@ document.addEventListener("DOMContentLoaded", function () {
     container.innerHTML = "";
     if (header) container.appendChild(header);
 
-    matchups.forEach((matchup, mi) => {
+    matchups.forEach((matchup, matchupIndex) => {
       const matchEl = document.createElement("div");
       matchEl.className = "matchup";
 
-      matchup.forEach((team, si) => {
+      matchup.forEach((team, slotIndex) => {
         const btn = document.createElement("button");
         btn.className = "team";
         btn.textContent = team || "";
 
         if (team && handler && !isLocked) {
-          btn.onclick = () => handler(mi, si, team);
+          btn.onclick = () => handler(matchupIndex, slotIndex, team);
         } else {
           btn.disabled = true;
         }
@@ -102,6 +102,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function renderChampion() {
     champEl.innerHTML = "<strong>Champion</strong>";
+
     if (!champion) return;
 
     const btn = document.createElement("button");
@@ -125,40 +126,62 @@ document.addEventListener("DOMContentLoaded", function () {
   ========================= */
 
   function clearRound(round) {
-    round.forEach(m => {
-      m[0] = null;
-      m[1] = null;
+    round.forEach(matchup => {
+      matchup[0] = null;
+      matchup[1] = null;
     });
   }
 
-  function handleRound1Pick(i, j, team) {
+  function handleRound1Pick(matchupIndex, slotIndex, team) {
     if (isLocked) return;
-    round2[Math.floor(i / 2)][i % 2] = team;
+
+    round2[Math.floor(matchupIndex / 2)][matchupIndex % 2] = team;
     clearRound(round3);
     clearRound(round4);
     champion = null;
+
     render();
   }
 
-  function handleRound2Pick(i, j, team) {
+  function handleRound2Pick(matchupIndex, slotIndex, team) {
     if (isLocked) return;
-    round3[Math.floor(i / 2)][i % 2] = team;
+
+    round3[Math.floor(matchupIndex / 2)][matchupIndex % 2] = team;
     clearRound(round4);
     champion = null;
+
     render();
   }
 
-  function handleRound3Pick(i, j, team) {
+  function handleRound3Pick(matchupIndex, slotIndex, team) {
     if (isLocked) return;
-    round4[0][i] = team;
+
+    round4[0][matchupIndex] = team;
     champion = null;
+
     render();
   }
 
-  function handleRound4Pick(i, j, team) {
+  function handleRound4Pick(matchupIndex, slotIndex, team) {
     if (isLocked) return;
+
     champion = team;
     render();
+  }
+
+  /* =========================
+     FIRESTORE SAFE SERIALIZE
+  ========================= */
+
+  function serializeRound(round) {
+    const obj = {};
+    for (let i = 0; i < round.length; i++) {
+      obj[`game${i + 1}`] = {
+        slot1: round[i][0] || null,
+        slot2: round[i][1] || null
+      };
+    }
+    return obj;
   }
 
   /* =========================
@@ -166,59 +189,59 @@ document.addEventListener("DOMContentLoaded", function () {
   ========================= */
 
   window.submitBracket = async function () {
-  console.log("Submit clicked");
+    if (isLocked) return;
 
-  if (isLocked) return;
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const tiebreaker = document.getElementById("tiebreaker").value.trim();
 
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const tiebreaker = document.getElementById("tiebreaker").value.trim();
+    if (!name || !email || !tiebreaker) {
+      alert("Please enter name, email, and tiebreaker.");
+      return;
+    }
 
-  if (!name || !email || !tiebreaker) {
-    alert("Fill out all fields.");
-    return;
-  }
+    if (!champion) {
+      alert("Please complete the entire bracket.");
+      return;
+    }
 
-  if (!champion) {
-    alert("Complete the bracket.");
-    return;
-  }
+    isLocked = true;
 
-  isLocked = true;
+    try {
+      const q = query(
+        collection(db, "brackets"),
+        where("email", "==", email)
+      );
 
-  try {
-    console.log("Saving to Firestore…");
+      const snapshot = await getDocs(q);
+      const entryNumber = snapshot.size + 1;
 
-    const q = query(
-      collection(db, "brackets"),
-      where("email", "==", email)
-    );
+      const submission = {
+        name,
+        email,
+        entryName: `${name} ${entryNumber}`,
+        tiebreaker: Number(tiebreaker),
+        submittedAt: serverTimestamp(),
+        picks: {
+          round1: serializeRound(round1),
+          round2: serializeRound(round2),
+          round3: serializeRound(round3),
+          round4: serializeRound(round4),
+          champion
+        }
+      };
 
-    const snap = await getDocs(q);
-    const entryNumber = snap.size + 1;
+      await addDoc(collection(db, "brackets"), submission);
 
-    const submission = {
-      name,
-      email,
-      entryName: `${name} ${entryNumber}`,
-      tiebreaker: Number(tiebreaker),
-      submittedAt: serverTimestamp(),
-      picks: { round1, round2, round3, round4, champion }
-    };
+      alert("Bracket submitted successfully!");
+      render();
 
-    await addDoc(collection(db, "brackets"), submission);
-
-    console.log("Saved successfully", submission);
-    alert("Bracket submitted!");
-
-    render();
-
-  } catch (err) {
-    console.error("FIREBASE ERROR:", err);
-    alert("Submission failed. Check console.");
-    isLocked = false;
-  }
-};
+    } catch (err) {
+      console.error("FIREBASE ERROR:", err);
+      alert("Submission failed. Check console.");
+      isLocked = false;
+    }
+  };
 
   /* =========================
      INIT
@@ -227,4 +250,3 @@ document.addEventListener("DOMContentLoaded", function () {
   render();
 
 });
-
