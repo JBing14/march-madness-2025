@@ -16,9 +16,10 @@ import {
 
 const ADMIN_EMAIL = "jbgerloff@gmail.com";
 
+/* ================= AUTH ================= */
+
 const loginDiv = document.getElementById("login");
 const dashboardDiv = document.getElementById("dashboard");
-
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const emailInput = document.getElementById("email");
@@ -62,21 +63,63 @@ onAuthStateChanged(auth, async user => {
   await initAdmin();
 });
 
+/* ================= INIT ================= */
+
 async function initAdmin() {
-  buildControls();
+  await buildRound1ControlsFromData();
   await loadResults();
   await loadSubmissions();
 }
 
-function buildControls() {
+/* ================= CONTROLS ================= */
+
+async function buildRound1ControlsFromData() {
   round1Controls.innerHTML = "";
   championSelect.innerHTML = `<option value="">Select Champion</option>`;
+
+  const snap = await getDocs(collection(db, "brackets"));
+  if (snap.empty) return;
+
+  const first = snap.docs[0].data().picks.round1;
+
+  Object.entries(first).forEach(([game, data]) => {
+    const select = document.createElement("select");
+    select.dataset.game = game;
+
+    select.innerHTML = `
+      <option value="">${game}</option>
+      <option value="${data.slot1}">${data.slot1}</option>
+      <option value="${data.slot2}">${data.slot2}</option>
+    `;
+
+    round1Controls.appendChild(select);
+
+    [data.slot1, data.slot2].forEach(team => {
+      if (![...championSelect.options].some(o => o.value === team)) {
+        const opt = document.createElement("option");
+        opt.value = team;
+        opt.textContent = team;
+        championSelect.appendChild(opt);
+      }
+    });
+  });
 }
+
+/* ================= RESULTS ================= */
 
 async function loadResults() {
   const snap = await getDoc(doc(db, "results", "current"));
   if (!snap.exists()) return;
+
   officialResults = snap.data();
+
+  document.querySelectorAll("#round1Controls select").forEach(sel => {
+    if (officialResults.round1[sel.dataset.game]) {
+      sel.value = officialResults.round1[sel.dataset.game];
+    }
+  });
+
+  championSelect.value = officialResults.champion || "";
 }
 
 saveResultsBtn.onclick = async () => {
@@ -85,12 +128,16 @@ saveResultsBtn.onclick = async () => {
     if (sel.value) officialResults.round1[sel.dataset.game] = sel.value;
   });
   officialResults.champion = championSelect.value;
+
   await setDoc(doc(db, "results", "current"), officialResults);
   scoreStatus.textContent = "Results saved.";
 };
 
+/* ================= SCORING ================= */
+
 scoreBtn.onclick = async () => {
   scoreStatus.textContent = "Scoring...";
+
   const brackets = await getDocs(collection(db, "brackets"));
 
   for (const b of brackets.docs) {
@@ -117,6 +164,8 @@ scoreBtn.onclick = async () => {
   scoreStatus.textContent = "Scoring complete.";
 };
 
+/* ================= SUBMISSIONS ================= */
+
 async function loadSubmissions() {
   const q = query(collection(db, "brackets"), orderBy("submittedAt", "desc"));
   const snap = await getDocs(q);
@@ -131,7 +180,8 @@ async function loadSubmissions() {
       <td>${d.data().tiebreaker}</td>
       <td>${d.data().submittedAt?.toDate().toLocaleString()}</td>
     `;
-    tr.onclick = () => detailsEl.textContent = JSON.stringify(d.data().picks, null, 2);
+    tr.onclick = () =>
+      detailsEl.textContent = JSON.stringify(d.data().picks, null, 2);
     tableBody.appendChild(tr);
   });
 }
