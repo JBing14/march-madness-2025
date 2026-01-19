@@ -22,7 +22,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = getFirestore(app, {
+  experimentalForceLongPolling: true
+});
+
 
 /* ================= STATE ================= */
 
@@ -185,3 +188,4 @@ async function submitBracket() {
   alert("Bracket submitted and locked.");
   render();
 }
+
