@@ -1,4 +1,4 @@
-import { db } from "./firebase.js";
+import { db, auth } from "./firebase.js";
 import {
   collection,
   query,
@@ -6,9 +6,77 @@ import {
   getDocs
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+
+/* =========================
+   CONFIG
+========================= */
+
+// 🔒 CHANGE THIS TO YOUR ADMIN EMAIL
+const ADMIN_EMAIL = "your_admin_email@example.com";
+
+/* =========================
+   DOM ELEMENTS
+========================= */
+
+const loginDiv = document.getElementById("login");
+const dashboardDiv = document.getElementById("dashboard");
+
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const loginError = document.getElementById("loginError");
+
 const tableBody = document.getElementById("table-body");
 const detailsEl = document.getElementById("details");
 const countEl = document.getElementById("count");
+const adminEmailEl = document.getElementById("adminEmail");
+
+/* =========================
+   AUTH HANDLING
+========================= */
+
+loginBtn.onclick = async () => {
+  loginError.textContent = "";
+
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      emailInput.value,
+      passwordInput.value
+    );
+  } catch (err) {
+    loginError.textContent = err.message;
+  }
+};
+
+logoutBtn.onclick = async () => {
+  await signOut(auth);
+};
+
+onAuthStateChanged(auth, user => {
+  if (!user || user.email !== ADMIN_EMAIL) {
+    loginDiv.style.display = "block";
+    dashboardDiv.style.display = "none";
+    return;
+  }
+
+  loginDiv.style.display = "none";
+  dashboardDiv.style.display = "block";
+  adminEmailEl.textContent = user.email;
+
+  loadSubmissions();
+});
+
+/* =========================
+   FIRESTORE QUERY
+========================= */
 
 async function loadSubmissions() {
   tableBody.innerHTML = "";
@@ -26,7 +94,6 @@ async function loadSubmissions() {
     const data = doc.data();
 
     const tr = document.createElement("tr");
-
     tr.innerHTML = `
       <td>${data.entryName}</td>
       <td>${data.email}</td>
@@ -41,5 +108,3 @@ async function loadSubmissions() {
     tableBody.appendChild(tr);
   });
 }
-
-loadSubmissions();
