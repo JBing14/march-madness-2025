@@ -1,4 +1,12 @@
 import { db } from "./firebase.js";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* ==============================
    TOURNAMENT DATA
@@ -27,7 +35,7 @@ const tournament = {
 let bracketEl;
 
 /* ==============================
-   HELPERS
+   HELPER FUNCTIONS
 ================================ */
 
 function clearDownstream(region, round, game) {
@@ -73,6 +81,30 @@ function handlePick(teamBtn) {
 
   targets[0].textContent = teamName;
   targets[0].classList.remove("empty");
+}
+
+function collectPicks() {
+  const picks = {};
+
+  document.querySelectorAll(".team").forEach(btn => {
+    if (!btn.classList.contains("empty")) {
+      const key = `${btn.dataset.region}_R${btn.dataset.round}_G${btn.dataset.game}`;
+      picks[key] = btn.textContent;
+    }
+  });
+
+  return picks;
+}
+
+async function getEntryNumber(name, email) {
+  const q = query(
+    collection(db, "brackets"),
+    where("nameBase", "==", name),
+    where("email", "==", email)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.size + 1;
 }
 
 /* ==============================
@@ -129,11 +161,56 @@ function renderBracket() {
 }
 
 /* ==============================
+   SUBMISSION HANDLER
+================================ */
+
+async function submitBracket() {
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const tiebreaker = document.getElementById("tiebreaker").value;
+
+  if (!name || !email || !tiebreaker) {
+    alert("Please fill out all fields.");
+    return;
+  }
+
+  const picks = collectPicks();
+
+  if (Object.keys(picks).length === 0) {
+    alert("You must make at least one pick.");
+    return;
+  }
+
+  const entryNumber = await getEntryNumber(name, email);
+  const entryName = `${name} ${entryNumber}`;
+
+  await addDoc(collection(db, "brackets"), {
+    name: entryName,
+    nameBase: name,
+    email,
+    tiebreaker: Number(tiebreaker),
+    picks,
+    timestamp: serverTimestamp(),
+    points: {}
+  });
+
+  document.querySelectorAll(".team").forEach(btn => {
+    btn.disabled = true;
+  });
+
+  document.getElementById("submitBracket").disabled = true;
+  alert("Bracket submitted successfully!");
+}
+
+/* ==============================
    INIT
 ================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
   bracketEl = document.getElementById("bracket");
-  console.log("Rendering bracket...");
   renderBracket();
+
+  document
+    .getElementById("submitBracket")
+    .addEventListener("click", submitBracket);
 });
