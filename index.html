@@ -8,23 +8,32 @@
       <h2>East</h2>
 
       <div class="round round-1">
-        <div class="matchup">
-          <button class="team">1 Auburn</button>
-          <button class="team">16 Alabama St</button>
-        </div>
-        <div class="matchup">
-          <button class="team">8 Louisville</button>
-          <button class="team">9 Creighton</button>
-        </div>
-        <!-- add remaining matchups later -->
-      </div>
+  <div class="matchup">
+    <button class="team" data-region="east" data-round="1" data-game="1">1 Auburn</button>
+    <button class="team" data-region="east" data-round="1" data-game="1">16 Alabama St</button>
+  </div>
+
+  <div class="matchup">
+    <button class="team" data-region="east" data-round="1" data-game="2">8 Louisville</button>
+    <button class="team" data-region="east" data-round="1" data-game="2">9 Creighton</button>
+  </div>
+</div>
+
 
       <div class="round round-2">
-        <div class="matchup">
-          <button class="team empty"></button>
-          <button class="team empty"></button>
-        </div>
-      </div>
+  <div class="matchup">
+    <button class="team empty"
+      data-region="east"
+      data-round="2"
+      data-game="1"></button>
+
+    <button class="team empty"
+      data-region="east"
+      data-round="2"
+      data-game="1"></button>
+  </div>
+</div>
+
 
       <div class="round round-3">
         <div class="matchup">
@@ -45,4 +54,5 @@
   <script type="module" src="./firebase.js"></script>
 <script type="module" src="./script.js"></script>
 </body>
+
 
