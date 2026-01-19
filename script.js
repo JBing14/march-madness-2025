@@ -3,10 +3,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const round2El = document.getElementById("round-2-left");
   const round3El = document.getElementById("round-3-left");
   const round4El = document.getElementById("round-4-left");
+  const champEl = document.getElementById("round-5-left");
 
-  /* =========================
-     STATE
-  ========================== */
+  if (!round1El || !round2El || !round3El || !round4El || !champEl) {
+    console.error("One or more round containers are missing");
+    return;
+  }
+
+  // ---------------- STATE ----------------
 
   const round1 = [
     ["Auburn", "Alabama St"],
@@ -35,15 +39,17 @@ document.addEventListener("DOMContentLoaded", () => {
     [null, null]
   ];
 
-  /* =========================
-     RENDER
-  ========================== */
+  let champion = null;
+
+  // ---------------- RENDER ----------------
 
   function render() {
     renderRound(round1El, round1, handleRound1Pick);
     renderRound(round2El, round2, handleRound2Pick);
     renderRound(round3El, round3, handleRound3Pick);
     renderRound(round4El, round4, handleRound4Pick);
+
+    renderChampion();
   }
 
   function renderRound(container, matchups, clickHandler) {
@@ -71,9 +77,24 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* =========================
-     LOGIC
-  ========================== */
+  function renderChampion() {
+    champEl.innerHTML = "";
+
+    if (!champion) return;
+
+    const matchEl = document.createElement("div");
+    matchEl.className = "matchup";
+
+    const btn = document.createElement("button");
+    btn.className = "team champion";
+    btn.textContent = champion;
+    btn.disabled = true;
+
+    matchEl.appendChild(btn);
+    champEl.appendChild(matchEl);
+  }
+
+  // ---------------- LOGIC ----------------
 
   function handleRound1Pick(matchupIndex, slotIndex, team) {
     const r2Matchup = Math.floor(matchupIndex / 2);
@@ -81,9 +102,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     round2[r2Matchup][r2Slot] = team;
 
-    // clear downstream
     clearRound(round3);
     clearRound(round4);
+    champion = null;
 
     render();
   }
@@ -95,12 +116,19 @@ document.addEventListener("DOMContentLoaded", () => {
     round3[r3Matchup][r3Slot] = team;
 
     clearRound(round4);
+    champion = null;
 
     render();
   }
 
   function handleRound3Pick(matchupIndex, slotIndex, team) {
     round4[0][matchupIndex] = team;
+    champion = null;
+    render();
+  }
+
+  function handleRound4Pick(matchupIndex, slotIndex, team) {
+    champion = team;
     render();
   }
 
@@ -111,23 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---------------- INIT ----------------
+
   render();
-}
-
-function handleRound4Pick(matchupIndex, slotIndex, team) {
-  // Final champion slot
-  const champEl = document.getElementById("round-5-left");
-  champEl.innerHTML = "";
-
-  const champ = document.createElement("div");
-  champ.className = "matchup";
-
-  const champBtn = document.createElement("button");
-  champBtn.className = "team champion";
-  champBtn.textContent = team;
-  champBtn.disabled = true;
-
-  champ.appendChild(champBtn);
-  champEl.appendChild(champ);
 });
-
