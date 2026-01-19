@@ -156,46 +156,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ---------------- SUBMISSION ----------------
 
-  window.submitBracket = function () {
-    if (isLocked) return;
+ window.submitBracket = function () {
+  if (isLocked) return;
 
-    var name = document.getElementById("name").value.trim();
-    var email = document.getElementById("email").value.trim();
-    var tiebreaker = document.getElementById("tiebreaker").value.trim();
+  var name = document.getElementById("name").value.trim();
+  var email = document.getElementById("email").value.trim();
+  var tiebreaker = document.getElementById("tiebreaker").value.trim();
 
-    if (!name || !email || !tiebreaker) {
-      alert("Please enter name, email, and tiebreaker.");
-      return;
+  if (!name || !email || !tiebreaker) {
+    alert("Please enter name, email, and tiebreaker.");
+    return;
+  }
+
+  if (!champion) {
+    alert("Please complete the bracket before submitting.");
+    return;
+  }
+
+  isLocked = true;
+
+  var submission = {
+    name: name,
+    email: email,
+    tiebreaker: Number(tiebreaker),
+    submittedAt: new Date().toISOString(),
+    picks: {
+      round1: round1,
+      round2: round2,
+      round3: round3,
+      round4: round4,
+      champion: champion
     }
-
-    if (!champion) {
-      alert("Please complete the bracket before submitting.");
-      return;
-    }
-
-    isLocked = true;
-
-    var submission = {
-      name: name,
-      email: email,
-      tiebreaker: Number(tiebreaker),
-      submittedAt: new Date().toISOString(),
-      picks: {
-        round1: round1,
-        round2: round2,
-        round3: round3,
-        round4: round4,
-        champion: champion
-      }
-    };
-
-    console.log("SUBMITTED BRACKET:", submission);
-    alert("Bracket submitted and locked.");
-    render();
   };
 
-  // ---------------- INIT ----------------
+  console.log("SUBMITTED BRACKET:", submission);
+  alert("Bracket submitted and locked.");
 
   render();
+};
 
-});
