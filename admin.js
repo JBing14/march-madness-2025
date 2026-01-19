@@ -43,15 +43,19 @@ const adminEmailEl = document.getElementById("adminEmail");
 ========================= */
 
 loginBtn.onclick = async () => {
+  console.log("Login button clicked");
   loginError.textContent = "";
 
   try {
+    console.log("Attempting sign-in...");
     await signInWithEmailAndPassword(
       auth,
       emailInput.value,
       passwordInput.value
     );
+    console.log("Sign-in success");
   } catch (err) {
+    console.error("AUTH ERROR:", err);
     loginError.textContent = err.message;
   }
 };
@@ -108,4 +112,5 @@ async function loadSubmissions() {
     tableBody.appendChild(tr);
   });
 }
+
 
