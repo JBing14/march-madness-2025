@@ -75,4 +75,18 @@ body {
   font-size: 14px;
 }
 
+.round {
+  position: relative;
+  z-index: 1;
+}
+
+.round-5,
+#round-5-left {
+  z-index: 0;
+  pointer-events: none;
+}
+
+.round-4 .team {
+  pointer-events: auto;
+}
 
