@@ -2,93 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin – March Madness</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #login, #dashboard { max-width: 1100px; margin: auto; }
-    #dashboard { display: none; }
-
-    input, select { padding: 6px; margin: 6px 0; width: 260px; }
-    button { padding: 8px 14px; cursor: pointer; }
-
-    h2 { margin-top: 24px; }
-    .row { display: flex; gap: 16px; flex-wrap: wrap; }
-
-    .card {
-      border: 1px solid #ddd;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 12px;
-    }
-
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; }
-    th { background: #f4f4f4; }
-    tr:hover { background: #f9f9f9; cursor: pointer; }
-
-    pre { background: #f4f4f4; padding: 12px; margin-top: 12px; overflow-x: auto; }
-    .danger { background: #b00020; color: #fff; border: none; }
-    .status { font-family: monospace; margin-top: 8px; }
-  </style>
+  <title>March Madness Admin</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<h1>March Madness – Admin</h1>
-
-<!-- LOGIN -->
 <div id="login">
   <h2>Admin Login</h2>
-  <input id="email" type="email" placeholder="Admin Email" />
+  <input id="email" type="email" placeholder="Email" />
   <input id="password" type="password" placeholder="Password" />
   <button id="loginBtn">Login</button>
   <p id="loginError" style="color:red;"></p>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard">
+<div id="dashboard" style="display:none;">
+  <h2>Admin Dashboard</h2>
+  <p>Logged in as <strong id="adminEmail"></strong></p>
+  <button id="logoutBtn">Logout</button>
 
-  <div class="row" style="justify-content: space-between; align-items: center;">
-    <div>Logged in as <strong id="adminEmail"></strong></div>
-    <button id="logoutBtn">Logout</button>
-  </div>
+  <hr />
 
-  <!-- OFFICIAL RESULTS -->
-  <h2>Official Results</h2>
+  <h3>Official Results</h3>
 
-  <div class="card">
-    <h3>Round 1 Winners</h3>
-    <div class="row" id="round1Controls"></div>
-  </div>
+  <h4>Round 1</h4>
+  <div id="round1Controls" class="round-controls"></div>
 
-  <div class="card">
-    <h3>Champion</h3>
-    <select id="championSelect">
-      <option value="">Select Champion</option>
-    </select>
-  </div>
+  <h4>Round 2</h4>
+  <div id="round2Controls" class="round-controls"></div>
 
-  <div class="card">
-    <h3>Bonus Games (5 pts each)</h3>
-    <div class="row">
-      <label><input type="checkbox" value="bonus1" /> Bonus 1</label>
-      <label><input type="checkbox" value="bonus2" /> Bonus 2</label>
-      <label><input type="checkbox" value="bonus3" /> Bonus 3</label>
-      <label><input type="checkbox" value="bonus4" /> Bonus 4</label>
-    </div>
-  </div>
+  <h4>Round 3</h4>
+  <div id="round3Controls" class="round-controls"></div>
 
+  <h4>Round 4</h4>
+  <div id="round4Controls" class="round-controls"></div>
+
+  <h4>Champion</h4>
+  <select id="championSelect"></select>
+
+  <br /><br />
   <button id="saveResultsBtn">Save Results</button>
-  <button id="scoreBtn" class="danger">Score All Brackets</button>
-  <pre id="scoreStatus" class="status">No scoring run yet.</pre>
+  <button id="scoreBtn">Score All Brackets</button>
+  <p id="scoreStatus"></p>
 
-  <!-- SUBMISSIONS -->
-  <h2>Bracket Submissions</h2>
-  <p><strong>Total:</strong> <span id="count">0</span></p>
+  <hr />
 
-  <table>
+  <h3>Bracket Submissions (<span id="count">0</span>)</h3>
+
+  <table border="1" cellpadding="6">
     <thead>
       <tr>
         <th>Entry Name</th>
@@ -100,9 +60,8 @@
     <tbody id="table-body"></tbody>
   </table>
 
-  <h3>Selected Bracket</h3>
-  <pre id="details">Click an entry to view picks…</pre>
-
+  <h4>Bracket Details</h4>
+  <pre id="details"></pre>
 </div>
 
 <script type="module" src="admin.js"></script>
