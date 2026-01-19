@@ -5,13 +5,13 @@ document.addEventListener("DOMContentLoaded", function () {
   var round3El = document.getElementById("round-3-left");
   var round4El = document.getElementById("round-4-left");
   var champEl  = document.getElementById("round-5-left");
-  var isLocked = false;
-
 
   if (!round1El || !round2El || !round3El || !round4El || !champEl) {
-    console.error("Missing round containers");
+    console.error("One or more round containers are missing");
     return;
   }
+
+  var isLocked = false;
 
   // ---------------- STATE ----------------
 
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // ---------------- RENDER ----------------
 
   function renderRound(container, matchups, handler) {
-    container.innerHTML = "";
+    container.innerHTML = "<strong>" + container.querySelector("strong").innerText + "</strong>";
 
     for (var i = 0; i < matchups.length; i++) {
       var matchup = matchups[i];
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
         btn.className = "team";
         btn.textContent = team ? team : "";
 
-        if (team && handler) {
+        if (team && handler && !isLocked) {
           btn.onclick = (function (mi, si, t) {
             return function () {
               handler(mi, si, t);
@@ -78,14 +78,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function renderChampion() {
-    champEl.innerHTML = "";
+    champEl.innerHTML = "<strong>Champion</strong>";
+
     if (!champion) return;
 
     var matchEl = document.createElement("div");
     matchEl.className = "matchup";
 
     var btn = document.createElement("button");
-    btn.className = "team champion";
+    btn.className = "team";
     btn.textContent = champion;
     btn.disabled = true;
 
@@ -112,6 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function handleRound1Pick(matchupIndex, slotIndex, team) {
     if (isLocked) return;
+
     var r2Matchup = Math.floor(matchupIndex / 2);
     var r2Slot = matchupIndex % 2;
 
@@ -125,6 +127,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function handleRound2Pick(matchupIndex, slotIndex, team) {
     if (isLocked) return;
+
     var r3Matchup = Math.floor(matchupIndex / 2);
     var r3Slot = matchupIndex % 2;
 
@@ -137,35 +140,62 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function handleRound3Pick(matchupIndex, slotIndex, team) {
     if (isLocked) return;
+
     round4[0][matchupIndex] = team;
     champion = null;
+
     render();
   }
-function isBracketComplete() {
-  if (!champion) return false;
 
-  for (var i = 0; i < round2.length; i++) {
-    if (!round2[i][0] || !round2[i][1]) return false;
-  }
-
-  for (var j = 0; j < round3.length; j++) {
-    if (!round3[j][0] || !round3[j][1]) return false;
-  }
-
-  if (!round4[0][0] || !round4[0][1]) return false;
-
-  return true;
-}
   function handleRound4Pick(matchupIndex, slotIndex, team) {
     if (isLocked) return;
+
     champion = team;
     render();
   }
+
+  // ---------------- SUBMISSION ----------------
+
+  window.submitBracket = function () {
+    if (isLocked) return;
+
+    var name = document.getElementById("name").value.trim();
+    var email = document.getElementById("email").value.trim();
+    var tiebreaker = document.getElementById("tiebreaker").value.trim();
+
+    if (!name || !email || !tiebreaker) {
+      alert("Please enter name, email, and tiebreaker.");
+      return;
+    }
+
+    if (!champion) {
+      alert("Please complete the bracket before submitting.");
+      return;
+    }
+
+    isLocked = true;
+
+    var submission = {
+      name: name,
+      email: email,
+      tiebreaker: Number(tiebreaker),
+      submittedAt: new Date().toISOString(),
+      picks: {
+        round1: round1,
+        round2: round2,
+        round3: round3,
+        round4: round4,
+        champion: champion
+      }
+    };
+
+    console.log("SUBMITTED BRACKET:", submission);
+    alert("Bracket submitted and locked.");
+    render();
+  };
 
   // ---------------- INIT ----------------
 
   render();
 
 });
-
-
