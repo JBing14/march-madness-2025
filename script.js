@@ -156,3 +156,51 @@ async function submitBracket() {
 
   alert("Bracket submitted successfully!");
 }
+
+/* =====================================================
+   CLICK BRIDGE — MATCH CHILD ELEMENTS
+   This binds clicks to whatever elements live inside
+   .match (divs, spans, etc.)
+   Does NOT modify existing logic.
+===================================================== */
+
+(function () {
+  if (window.__matchClickPatchApplied) return;
+  window.__matchClickPatchApplied = true;
+
+  document.addEventListener("click", function (e) {
+    const teamEl = e.target.closest(".match > *");
+    if (!teamEl) return;
+
+    const match = teamEl.closest(".match");
+    if (!match) return;
+
+    // Ignore empty placeholders
+    const teamName = teamEl.textContent.trim();
+    if (!teamName) return;
+
+    // Visual selection
+    [...match.children].forEach(el =>
+      el.classList.remove("selected")
+    );
+    teamEl.classList.add("selected");
+
+    // Pull metadata from match container
+    const region = match.dataset.region;
+    const round = Number(match.dataset.round);
+    const game = Number(match.dataset.game);
+
+    if (
+      typeof pickRegionRound !== "function" ||
+      !region || !round || !game
+    ) {
+      console.warn("pickRegionRound unavailable or missing data", {
+        region, round, game, teamName
+      });
+      return;
+    }
+
+    // 🔑 CALL YOUR EXISTING ENGINE
+    pickRegionRound(region, round, game, teamName);
+  });
+})();
