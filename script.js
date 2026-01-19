@@ -166,40 +166,59 @@ document.addEventListener("DOMContentLoaded", function () {
   ========================= */
 
   window.submitBracket = async function () {
-    if (isLocked) return;
+  console.log("Submit clicked");
 
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const tiebreaker = document.getElementById("tiebreaker").value.trim();
+  if (isLocked) return;
 
-    if (!name || !email || !tiebreaker) {
-      alert("Fill out all fields.");
-      return;
-    }
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const tiebreaker = document.getElementById("tiebreaker").value.trim();
 
-    if (!champion) {
-      alert("Complete the bracket.");
-      return;
-    }
+  if (!name || !email || !tiebreaker) {
+    alert("Fill out all fields.");
+    return;
+  }
 
-    isLocked = true;
+  if (!champion) {
+    alert("Complete the bracket.");
+    return;
+  }
 
-    const q = query(collection(db, "brackets"), where("email", "==", email));
+  isLocked = true;
+
+  try {
+    console.log("Saving to Firestore…");
+
+    const q = query(
+      collection(db, "brackets"),
+      where("email", "==", email)
+    );
+
     const snap = await getDocs(q);
     const entryNumber = snap.size + 1;
 
-    await addDoc(collection(db, "brackets"), {
+    const submission = {
       name,
       email,
       entryName: `${name} ${entryNumber}`,
       tiebreaker: Number(tiebreaker),
       submittedAt: serverTimestamp(),
       picks: { round1, round2, round3, round4, champion }
-    });
+    };
 
+    await addDoc(collection(db, "brackets"), submission);
+
+    console.log("Saved successfully", submission);
     alert("Bracket submitted!");
+
     render();
-  };
+
+  } catch (err) {
+    console.error("FIREBASE ERROR:", err);
+    alert("Submission failed. Check console.");
+    isLocked = false;
+  }
+};
 
   /* =========================
      INIT
@@ -208,3 +227,4 @@ document.addEventListener("DOMContentLoaded", function () {
   render();
 
 });
+
