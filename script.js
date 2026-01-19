@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ---------------- SUBMISSION ----------------
 
- window.submitBracket = function () {
+ window.submitBracket = async function () {
   if (isLocked) return;
 
   var name = document.getElementById("name").value.trim();
@@ -185,11 +185,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
   isLocked = true;
 
-  var submission = {
+  // ---- Determine entry number (John Doe 1, 2, etc.) ----
+  const q = query(
+    collection(db, "brackets"),
+    where("email", "==", email)
+  );
+
+  const snapshot = await getDocs(q);
+  const entryNumber = snapshot.size + 1;
+
+  const submission = {
     name: name,
     email: email,
+    entryName: `${name} ${entryNumber}`,
     tiebreaker: Number(tiebreaker),
-    submittedAt: new Date().toISOString(),
+    submittedAt: serverTimestamp(),
     picks: {
       round1: round1,
       round2: round2,
@@ -199,10 +209,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   };
 
-  console.log("SUBMITTED BRACKET:", submission);
-  alert("Bracket submitted and locked.");
+  await addDoc(collection(db, "brackets"), submission);
 
+  alert("Bracket submitted and saved!");
   render();
 };
+
 
 
