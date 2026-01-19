@@ -63,6 +63,7 @@ function handlePick(teamBtn) {
   const game = Number(teamBtn.dataset.game);
   const teamName = teamBtn.textContent;
 
+  // Clear everything downstream first
   clearDownstream(region, round, game);
 
   const nextRound = round + 1;
@@ -74,13 +75,11 @@ function handlePick(teamBtn) {
 
   if (!targets.length) return;
 
-  targets.forEach(btn => {
-    btn.textContent = "";
-    btn.classList.add("empty");
-  });
+  // Determine which slot to fill (0 or 1)
+  const slotIndex = (game % 2 === 1) ? 0 : 1;
 
-  targets[0].textContent = teamName;
-  targets[0].classList.remove("empty");
+  targets[slotIndex].textContent = teamName;
+  targets[slotIndex].classList.remove("empty");
 }
 
 function collectPicks() {
@@ -213,5 +212,6 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("submitBracket")
     .addEventListener("click", submitBracket);
 });
+
 
 
