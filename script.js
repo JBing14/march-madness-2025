@@ -5,28 +5,33 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-/* ================= CONFIG ================= */
+/* =====================================================
+   CONFIG
+===================================================== */
 
-const REGIONS = ["east", "west", "south", "midwest"];
+const REGIONS = ["east", "south", "west", "midwest"];
+const MAX_ROUND = 4;
 
-/* ================= STATE ================= */
+/* =====================================================
+   STATE
+===================================================== */
 
-const picks = {};
 let locked = false;
 
-/* ================= INIT ================= */
+const picks = {
+  east: initRegion(),
+  south: initRegion(),
+  west: initRegion(),
+  midwest: initRegion()
+};
+
+/* =====================================================
+   INIT
+===================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
-  REGIONS.forEach(region => {
-    picks[region] = {
-      round1: {},
-      round2: {},
-      round3: {},
-      round4: {},
-      finalFour: ""
-    };
-
-    wireRegion(region);
+  document.querySelectorAll(".slot").forEach(slot => {
+    slot.addEventListener("click", () => handlePick(slot));
   });
 
   document
@@ -34,69 +39,122 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("click", submitBracket);
 });
 
-/* ================= REGION LOGIC ================= */
+/* =====================================================
+   HELPERS
+===================================================== */
 
-function wireRegion(region) {
-  document
-    .querySelectorAll(`.team[data-region="${region}"]`)
-    .forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (locked) return;
-        advance(region, btn);
-      });
-    });
+function initRegion() {
+  return {
+    round1: {},
+    round2: {},
+    round3: {},
+    round4: {},
+    finalFour: ""
+  };
 }
 
-function advance(region, btn) {
-  const round = btn.dataset.round;
-  const game = btn.dataset.game;
-  const team = btn.textContent;
+function getRegion(slot) {
+  return slot.dataset.region;
+}
 
-  picks[region][`round${round}`][`game${game}`] = { pick: team };
+function getRound(slot) {
+  return Number(slot.dataset.round);
+}
 
-  const nextRound = parseInt(round) + 1;
-  const nextGame = Math.ceil(game / 2);
+function getGame(slot) {
+  return Number(slot.dataset.game);
+}
 
-  const targets = document.querySelectorAll(
-    `.team[data-region="${region}"][data-round="${nextRound}"][data-game="${nextGame}"]`
+function getMatchSlots(region, round, game) {
+  return [
+    ...document.querySelectorAll(
+      `.slot[data-region="${region}"][data-round="${round}"][data-game="${game}"]`
+    )
+  ];
+}
+
+function getNextSlot(region, round, game) {
+  return document.querySelector(
+    `.slot.empty[data-region="${region}"][data-round="${round + 1}"][data-game="${Math.ceil(game / 2)}"]`
   );
+}
 
-  if (targets.length) {
-    targets.forEach(t => {
-      if (t.classList.contains("empty")) {
-        t.textContent = team;
-        t.classList.remove("empty");
-      }
-    });
+/* =====================================================
+   PICK HANDLING
+===================================================== */
 
-    clearDownstream(region, nextRound, nextGame);
+function handlePick(slot) {
+  if (locked) return;
+  if (slot.classList.contains("empty")) return;
+
+  const region = getRegion(slot);
+  const round = getRound(slot);
+  const game = getGame(slot);
+  const team = slot.textContent.trim();
+
+  // Enforce one pick per matchup (visual + logical)
+  getMatchSlots(region, round, game).forEach(s => {
+    s.classList.remove("picked");
+  });
+  slot.classList.add("picked");
+
+  // Save pick
+  picks[region][`round${round}`][`game${game}`] = team;
+
+  // Clear everything downstream BEFORE advancing
+  clearDownstream(region, round, game);
+
+  // Advance to next round
+  if (round < MAX_ROUND) {
+    const target = getNextSlot(region, round, game);
+    if (target) {
+      target.textContent = team;
+      target.classList.remove("empty");
+    }
   }
 
-  // Final Four (Round 4 winner)
-  if (round === "4") {
+  // Final Four winner
+  if (round === MAX_ROUND) {
     picks[region].finalFour = team;
   }
 }
 
+/* =====================================================
+   CLEAR DOWNSTREAM
+===================================================== */
+
 function clearDownstream(region, round, game) {
-  for (let r = round + 1; r <= 4; r++) {
-    const gStart = Math.ceil(game / Math.pow(2, r - round));
+  for (let r = round + 1; r <= MAX_ROUND; r++) {
+    const affectedGames = Object.keys(picks[region][`round${r}`] || {});
+    affectedGames.forEach(g => {
+      delete picks[region][`round${r}`][g];
+    });
+
     document
       .querySelectorAll(
-        `.team[data-region="${region}"][data-round="${r}"][data-game="${gStart}"]`
+        `.slot[data-region="${region}"][data-round="${r}"]`
       )
-      .forEach(t => {
-        t.textContent = "";
-        t.classList.add("empty");
+      .forEach(slot => {
+        slot.textContent = "";
+        slot.classList.add("empty");
+        slot.classList.remove("picked");
       });
-
-    delete picks[region][`round${r}`][`game${gStart}`];
   }
 
   picks[region].finalFour = "";
 }
 
-/* ================= SUBMIT ================= */
+/* =====================================================
+   VALIDATION
+===================================================== */
+
+function isComplete() {
+  return REGIONS.every(r => picks[r].finalFour);
+}
+
+/* =====================================================
+   SUBMIT
+===================================================== */
 
 async function submitBracket() {
   if (locked) return;
@@ -110,12 +168,9 @@ async function submitBracket() {
     return;
   }
 
-  // Validate all regions have Final Four pick
-  for (const r of REGIONS) {
-    if (!picks[r].finalFour) {
-      alert(`Please complete the ${r.toUpperCase()} region.`);
-      return;
-    }
+  if (!isComplete()) {
+    alert("Please complete all four regions.");
+    return;
   }
 
   locked = true;
@@ -129,5 +184,5 @@ async function submitBracket() {
     submittedAt: serverTimestamp()
   });
 
-  alert("Bracket submitted!");
+  alert("Bracket submitted successfully!");
 }
