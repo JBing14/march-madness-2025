@@ -6,87 +6,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #fff;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #login, #dashboard { max-width: 1100px; margin: auto; }
+    #dashboard { display: none; }
 
-    h1, h2, h3 {
-      margin-top: 0;
-    }
+    input, select { padding: 6px; margin: 6px 0; width: 260px; }
+    button { padding: 8px 14px; cursor: pointer; }
 
-    #login, #dashboard {
-      max-width: 1100px;
-      margin: auto;
-    }
+    h2 { margin-top: 24px; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
 
-    #dashboard {
-      display: none;
-    }
-
-    input {
-      display: block;
-      width: 100%;
-      max-width: 400px;
-      margin-bottom: 10px;
-      padding: 8px;
-      font-size: 14px;
-    }
-
-    button {
-      padding: 8px 16px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 20px;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-      font-size: 14px;
-    }
-
-    th {
-      background-color: #f4f4f4;
-    }
-
-    tr:hover {
-      background-color: #f9f9f9;
-      cursor: pointer;
-    }
-
-    pre {
-      background: #f4f4f4;
+    .card {
+      border: 1px solid #ddd;
       padding: 12px;
-      margin-top: 15px;
-      overflow-x: auto;
-      font-size: 13px;
+      border-radius: 6px;
+      margin-bottom: 12px;
     }
 
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    th { background: #f4f4f4; }
+    tr:hover { background: #f9f9f9; cursor: pointer; }
 
-    .danger {
-      background: #b00020;
-      color: #fff;
-      border: none;
-    }
-
-    .status {
-      margin-top: 10px;
-      font-family: monospace;
-    }
+    pre { background: #f4f4f4; padding: 12px; margin-top: 12px; overflow-x: auto; }
+    .danger { background: #b00020; color: #fff; border: none; }
+    .status { font-family: monospace; margin-top: 8px; }
   </style>
 </head>
 
@@ -94,61 +38,55 @@
 
 <h1>March Madness – Admin</h1>
 
-<!-- ================= LOGIN ================= -->
-
+<!-- LOGIN -->
 <div id="login">
   <h2>Admin Login</h2>
-
-  <input
-    type="email"
-    id="email"
-    placeholder="Admin Email"
-    autocomplete="username"
-  />
-
-  <input
-    type="password"
-    id="password"
-    placeholder="Password"
-    autocomplete="current-password"
-  />
-
+  <input id="email" type="email" placeholder="Admin Email" />
+  <input id="password" type="password" placeholder="Password" />
   <button id="loginBtn">Login</button>
-
   <p id="loginError" style="color:red;"></p>
 </div>
 
-<!-- ================= DASHBOARD ================= -->
-
+<!-- DASHBOARD -->
 <div id="dashboard">
 
-  <div class="top-bar">
-    <div>
-      Logged in as <strong id="adminEmail"></strong>
-    </div>
+  <div class="row" style="justify-content: space-between; align-items: center;">
+    <div>Logged in as <strong id="adminEmail"></strong></div>
     <button id="logoutBtn">Logout</button>
   </div>
 
-  <!-- ===== SCORING ===== -->
+  <!-- OFFICIAL RESULTS -->
+  <h2>Official Results</h2>
 
-  <h2>Scoring</h2>
+  <div class="card">
+    <h3>Round 1 Winners</h3>
+    <div class="row" id="round1Controls"></div>
+  </div>
 
-  <button id="scoreBtn" class="danger">
-    Score All Brackets
-  </button>
+  <div class="card">
+    <h3>Champion</h3>
+    <select id="championSelect">
+      <option value="">Select Champion</option>
+    </select>
+  </div>
 
-  <pre id="scoreStatus" class="status">
-No scoring run yet.
-  </pre>
+  <div class="card">
+    <h3>Bonus Games (5 pts each)</h3>
+    <div class="row">
+      <label><input type="checkbox" value="bonus1" /> Bonus 1</label>
+      <label><input type="checkbox" value="bonus2" /> Bonus 2</label>
+      <label><input type="checkbox" value="bonus3" /> Bonus 3</label>
+      <label><input type="checkbox" value="bonus4" /> Bonus 4</label>
+    </div>
+  </div>
 
-  <!-- ===== SUBMISSIONS ===== -->
+  <button id="saveResultsBtn">Save Results</button>
+  <button id="scoreBtn" class="danger">Score All Brackets</button>
+  <pre id="scoreStatus" class="status">No scoring run yet.</pre>
 
+  <!-- SUBMISSIONS -->
   <h2>Bracket Submissions</h2>
-
-  <p>
-    <strong>Total Submissions:</strong>
-    <span id="count">0</span>
-  </p>
+  <p><strong>Total:</strong> <span id="count">0</span></p>
 
   <table>
     <thead>
@@ -156,22 +94,17 @@ No scoring run yet.
         <th>Entry Name</th>
         <th>Email</th>
         <th>Tiebreaker</th>
-        <th>Submitted At</th>
+        <th>Submitted</th>
       </tr>
     </thead>
     <tbody id="table-body"></tbody>
   </table>
 
-  <h3>Selected Bracket (Raw Picks)</h3>
-
-  <pre id="details">
-Click an entry to view picks…
-  </pre>
+  <h3>Selected Bracket</h3>
+  <pre id="details">Click an entry to view picks…</pre>
 
 </div>
 
 <script type="module" src="admin.js"></script>
-
 </body>
 </html>
-
