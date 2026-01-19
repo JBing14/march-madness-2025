@@ -1,35 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>March Madness 2025</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-bracket@0.11.1/dist/jquery.bracket.min.css">
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jquery-bracket@0.11.1/dist/jquery.bracket.min.js"></script>
-</head>
 <body>
-  <header>
-    <h1>March Madness 2025</h1>
-  </header>
-  <main>
-    <form id="userForm">
-      <input type="text" id="name" placeholder="Your Name" required>
-      <input type="email" id="email" placeholder="Your Email" required>
-      <input type="number" id="tiebreaker" placeholder="Total Points in Championship" required>
-      <button type="submit">Submit Bracket</button>
-    </form>
-    <div class="bracket-container">
-      <div id="left-bracket" class="bracket-half"></div>
-      <div id="final-game" class="final-game">
-        <h3>Championship</h3>
-        <div id="final-matchup"></div>
+  <h1 class="title">March Madness Bracket</h1>
+
+  <div class="bracket">
+
+    <!-- EAST REGION -->
+    <div class="region" data-region="east">
+      <h2>East</h2>
+
+      <div class="round round-1">
+        <div class="matchup">
+          <button class="team">1 Auburn</button>
+          <button class="team">16 Alabama St</button>
+        </div>
+        <div class="matchup">
+          <button class="team">8 Louisville</button>
+          <button class="team">9 Creighton</button>
+        </div>
+        <!-- add remaining matchups later -->
       </div>
-      <div id="right-bracket" class="bracket-half"></div>
+
+      <div class="round round-2">
+        <div class="matchup">
+          <button class="team empty"></button>
+          <button class="team empty"></button>
+        </div>
+      </div>
+
+      <div class="round round-3">
+        <div class="matchup">
+          <button class="team empty"></button>
+        </div>
+      </div>
+
+      <div class="round round-4">
+        <div class="matchup">
+          <button class="team empty"></button>
+        </div>
+      </div>
+
     </div>
-    <div id="leaderboard"></div>
-  </main>
-  <script src="script.js"></script>
+
+  </div>
+
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
-</html>
