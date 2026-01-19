@@ -93,8 +93,8 @@ onAuthStateChanged(auth, async user => {
 
 async function initAdmin() {
   await buildRound1Controls();
-  await loadResults();
-  await loadSubmissions();
+  await loadResults();          // MUST load before scoring
+  await loadSubmissions();      // MUST run AFTER auth
 }
 
 /* ================= BUILD ROUND 1 ================= */
@@ -130,7 +130,7 @@ function createSelect(game, options, level) {
   return sel;
 }
 
-/* ================= CASCADE LOGIC ================= */
+/* ================= CASCADE ================= */
 
 function rebuildFromLevel(level) {
   if (level <= 1) {
@@ -175,7 +175,13 @@ function buildChampionOptions() {
   });
 }
 
-/* ================= SAVE RESULTS ================= */
+/* ================= RESULTS ================= */
+
+async function loadResults() {
+  const snap = await getDoc(doc(db, "results", "current"));
+  if (!snap.exists()) return;
+  officialResults = snap.data();
+}
 
 saveResultsBtn.onclick = async () => {
   officialResults.round1 = collect(round1Controls);
@@ -188,18 +194,13 @@ saveResultsBtn.onclick = async () => {
   scoreStatus.textContent = "Results saved.";
 };
 
-function collect(container) {
-  const out = {};
-  container.querySelectorAll("select").forEach(sel => {
-    if (sel.value) out[sel.dataset.game] = sel.value;
-  });
-  return out;
-}
-
 /* ================= SCORING ================= */
 
 scoreBtn.onclick = async () => {
   scoreStatus.textContent = "Scoring...";
+
+  // ENSURE we score against saved results
+  await loadResults();
 
   const snap = await getDocs(collection(db, "brackets"));
 
@@ -256,4 +257,12 @@ async function loadSubmissions() {
       (detailsEl.textContent = JSON.stringify(d.data().picks, null, 2));
     tableBody.appendChild(tr);
   });
+}
+
+function collect(container) {
+  const out = {};
+  container.querySelectorAll("select").forEach(sel => {
+    if (sel.value) out[sel.dataset.game] = sel.value;
+  });
+  return out;
 }
