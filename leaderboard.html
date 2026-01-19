@@ -1,1 +1,18 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Same head as index.html -->
+</head>
+<body>
+  <div class="container my-4">
+    <h1 class="text-center text-primary">Leaderboard</h1>
+    <table class="table table-striped">
+      <thead><tr><th>Rank</th><th>Entry</th><th>Score</th><th>Tiebreaker</th></tr></thead>
+      <tbody id="table-body"></tbody>
+    </table>
+    <button id="exportPdf" class="btn btn-secondary">Export PDF</button>
+    <pre id="details">Click entry to view bracket</pre>
+  </div>
+  <script type="module" src="leaderboard.js"></script>
+</body>
+</html>
