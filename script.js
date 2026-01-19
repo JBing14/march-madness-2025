@@ -1,4 +1,9 @@
 import { db } from "./firebase.js";
+
+/* ==============================
+   TOURNAMENT DATA
+================================ */
+
 const tournament = {
   regions: {
     east: [
@@ -14,13 +19,19 @@ const tournament = {
   },
   rounds: 4
 };
-const teams = document.querySelectorAll(".team");
 
-teams.forEach(team => {
-  team.addEventListener("click", () => handlePick(team));
-});
+/* ==============================
+   DOM REFERENCES
+================================ */
+
+let bracketEl;
+
+/* ==============================
+   HELPERS
+================================ */
+
 function clearDownstream(region, round, game) {
-  const maxRound = 4; // per region
+  const maxRound = tournament.rounds;
 
   for (let r = round + 1; r <= maxRound; r++) {
     const g = Math.ceil(game / Math.pow(2, r - round));
@@ -35,6 +46,7 @@ function clearDownstream(region, round, game) {
     });
   }
 }
+
 function handlePick(teamBtn) {
   if (teamBtn.classList.contains("empty") && teamBtn.textContent === "") return;
 
@@ -43,28 +55,85 @@ function handlePick(teamBtn) {
   const game = Number(teamBtn.dataset.game);
   const teamName = teamBtn.textContent;
 
-  // Clear everything downstream first
   clearDownstream(region, round, game);
 
   const nextRound = round + 1;
   const nextGame = Math.ceil(game / 2);
 
-  const targetSlots = document.querySelectorAll(
+  const targets = document.querySelectorAll(
     `.team[data-region="${region}"][data-round="${nextRound}"][data-game="${nextGame}"]`
   );
 
-  if (!targetSlots.length) return;
+  if (!targets.length) return;
 
-  // Clear current next-round matchup
-  targetSlots.forEach(slot => {
-    slot.textContent = "";
-    slot.classList.add("empty");
+  targets.forEach(btn => {
+    btn.textContent = "";
+    btn.classList.add("empty");
   });
 
-  // Fill first slot
-  targetSlots[0].textContent = teamName;
-  targetSlots[0].classList.remove("empty");
+  targets[0].textContent = teamName;
+  targets[0].classList.remove("empty");
 }
 
+/* ==============================
+   RENDER BRACKET
+================================ */
 
+function renderBracket() {
+  Object.entries(tournament.regions).forEach(([regionName, games]) => {
+    const regionEl = document.createElement("div");
+    regionEl.className = "region";
+    regionEl.dataset.region = regionName;
 
+    regionEl.innerHTML = `<h2>${regionName.toUpperCase()}</h2>`;
+
+    for (let round = 1; round <= tournament.rounds; round++) {
+      const roundEl = document.createElement("div");
+      roundEl.className = `round round-${round}`;
+
+      const matchupCount =
+        round === 1
+          ? games.length
+          : Math.ceil(games.length / Math.pow(2, round - 1));
+
+      for (let game = 1; game <= matchupCount; game++) {
+        const matchupEl = document.createElement("div");
+        matchupEl.className = "matchup";
+
+        const slots = round === 1 ? 2 : 1;
+
+        for (let s = 0; s < slots; s++) {
+          const btn = document.createElement("button");
+          btn.className = "team empty";
+          btn.dataset.region = regionName;
+          btn.dataset.round = round;
+          btn.dataset.game = game;
+
+          if (round === 1) {
+            btn.textContent = games[game - 1][s];
+            btn.classList.remove("empty");
+          }
+
+          btn.addEventListener("click", () => handlePick(btn));
+          matchupEl.appendChild(btn);
+        }
+
+        roundEl.appendChild(matchupEl);
+      }
+
+      regionEl.appendChild(roundEl);
+    }
+
+    bracketEl.appendChild(regionEl);
+  });
+}
+
+/* ==============================
+   INIT
+================================ */
+
+document.addEventListener("DOMContentLoaded", () => {
+  bracketEl = document.getElementById("bracket");
+  console.log("Rendering bracket...");
+  renderBracket();
+});
