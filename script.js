@@ -46,10 +46,18 @@ const round4 = [[null, null]];
 
 const picks = { round1: {}, round2: {}, round3: {}, round4: {} };
 
+/* ================= DOM READY ================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("submitBtn").addEventListener("click", submitBracket);
+  render();
+});
+
 /* ================= RENDER ================= */
 
 function renderRound(container, data, onPick) {
-  container.innerHTML = `<strong>${container.dataset.title}</strong>`;
+  const title = container.querySelector("strong")?.textContent || "";
+  container.innerHTML = `<strong>${title}</strong>`;
 
   data.forEach((m, i) => {
     const div = document.createElement("div");
@@ -72,6 +80,7 @@ function renderChampion() {
   const c = document.getElementById("champion");
   c.innerHTML = "<strong>Champion</strong>";
   if (!champion) return;
+
   const btn = document.createElement("button");
   btn.className = "team champion";
   btn.textContent = champion;
@@ -94,6 +103,7 @@ function clearRound(r) {
 }
 
 function pickRound1(i, team) {
+  if (locked) return;
   picks.round1[`game${i + 1}`] = team;
   round2[Math.floor(i / 2)][i % 2] = team;
   clearRound(round3); clearRound(round4); champion = null;
@@ -101,6 +111,7 @@ function pickRound1(i, team) {
 }
 
 function pickRound2(i, team) {
+  if (locked) return;
   picks.round2[`game${i + 1}`] = team;
   round3[Math.floor(i / 2)][i % 2] = team;
   clearRound(round4); champion = null;
@@ -108,6 +119,7 @@ function pickRound2(i, team) {
 }
 
 function pickRound3(i, team) {
+  if (locked) return;
   picks.round3[`game${i + 1}`] = team;
   round4[0][i] = team;
   champion = null;
@@ -115,6 +127,7 @@ function pickRound3(i, team) {
 }
 
 function pickRound4(_, team) {
+  if (locked) return;
   picks.round4.game1 = team;
   champion = team;
   render();
@@ -122,9 +135,9 @@ function pickRound4(_, team) {
 
 /* ================= SUBMIT ================= */
 
-document.getElementById("submitBtn").onclick = submitBracket;
-
 async function submitBracket() {
+  console.log("SUBMIT CLICKED");
+
   if (locked) return;
 
   const name = document.getElementById("name").value.trim();
@@ -140,7 +153,7 @@ async function submitBracket() {
   const snap = await getDocs(q);
   const entryNumber = snap.size + 1;
 
-  function serialize(round, roundPicks) {
+  const serialize = (round, roundPicks) => {
     const out = {};
     round.forEach((m, i) => {
       out[`game${i + 1}`] = {
@@ -150,7 +163,7 @@ async function submitBracket() {
       };
     });
     return out;
-  }
+  };
 
   locked = true;
 
@@ -172,11 +185,3 @@ async function submitBracket() {
   alert("Bracket submitted and locked.");
   render();
 }
-
-/* ================= INIT ================= */
-
-document.getElementById("round1").dataset.title = "Round 1";
-document.getElementById("round2").dataset.title = "Round 2";
-document.getElementById("round3").dataset.title = "Round 3";
-document.getElementById("round4").dataset.title = "Final";
-render();
