@@ -97,7 +97,7 @@ async function initAdmin() {
   await loadSubmissions();
 }
 
-/* ================= BUILD CONTROLS ================= */
+/* ================= BUILD ROUND 1 ================= */
 
 async function buildRound1Controls() {
   round1Controls.innerHTML = "";
@@ -112,36 +112,43 @@ async function buildRound1Controls() {
   const round1 = snap.docs[0].data().picks.round1;
 
   Object.entries(round1).forEach(([game, data]) => {
-    const sel = createSelect(game, [data.slot1, data.slot2]);
-    round1Controls.appendChild(sel);
-
-    [data.slot1, data.slot2].forEach(team => {
-      if (![...championSelect.options].some(o => o.value === team)) {
-        championSelect.appendChild(new Option(team, team));
-      }
-    });
+    round1Controls.appendChild(
+      createSelect(game, [data.slot1, data.slot2], 1)
+    );
   });
 }
 
-function createSelect(game, options) {
+/* ================= SELECT CREATION ================= */
+
+function createSelect(game, options, level) {
   const sel = document.createElement("select");
   sel.dataset.game = game;
+  sel.dataset.level = level;
   sel.innerHTML = `<option value="">${game}</option>`;
   options.forEach(t => sel.appendChild(new Option(t, t)));
-  sel.onchange = rebuildDownstream;
+  sel.onchange = () => rebuildFromLevel(level);
   return sel;
 }
 
-/* ================= CASCADE ================= */
+/* ================= CASCADE LOGIC ================= */
 
-function rebuildDownstream() {
-  buildNextRound(round1Controls, round2Controls, "round2");
-  buildNextRound(round2Controls, round3Controls, "round3");
-  buildNextRound(round3Controls, round4Controls, "round4");
+function rebuildFromLevel(level) {
+  if (level <= 1) {
+    buildNextRound(round1Controls, round2Controls, "round2", 2);
+    round3Controls.innerHTML = "";
+    round4Controls.innerHTML = "";
+  }
+  if (level <= 2) {
+    buildNextRound(round2Controls, round3Controls, "round3", 3);
+    round4Controls.innerHTML = "";
+  }
+  if (level <= 3) {
+    buildNextRound(round3Controls, round4Controls, "round4", 4);
+  }
   buildChampionOptions();
 }
 
-function buildNextRound(from, to, key) {
+function buildNextRound(from, to, key, level) {
   to.innerHTML = "";
   officialResults[key] = {};
 
@@ -151,11 +158,13 @@ function buildNextRound(from, to, key) {
 
   for (let i = 0; i < winners.length; i += 2) {
     if (!winners[i + 1]) break;
-    const sel = createSelect(`game${i / 2 + 1}`, [
-      winners[i],
-      winners[i + 1]
-    ]);
-    to.appendChild(sel);
+    to.appendChild(
+      createSelect(
+        `game${i / 2 + 1}`,
+        [winners[i], winners[i + 1]],
+        level
+      )
+    );
   }
 }
 
@@ -207,12 +216,10 @@ scoreBtn.onclick = async () => {
       score.r5 = POINTS.r5;
     }
 
-    const total =
-      score.r1 + score.r2 + score.r3 + score.r4 + score.r5;
-
     await setDoc(doc(db, "scores", b.id), {
       entryName: b.data().entryName,
-      total,
+      total:
+        score.r1 + score.r2 + score.r3 + score.r4 + score.r5,
       rounds: score
     });
   }
