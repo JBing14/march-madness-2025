@@ -1,72 +1,114 @@
 document.addEventListener("DOMContentLoaded", () => {
   const round1El = document.getElementById("round-1-left");
   const round2El = document.getElementById("round-2-left");
+  const round3El = document.getElementById("round-3-left");
+  const round4El = document.getElementById("round-4-left");
 
-  // ---- DATA ----
-  const round1Matchups = [
+  /* =========================
+     STATE
+  ========================== */
+
+  const round1 = [
     ["Auburn", "Alabama St"],
     ["Louisville", "Creighton"],
     ["Michigan", "UC San Diego"],
-    ["Texas A&M", "Yale"]
+    ["Texas A&M", "Yale"],
+    ["Ole Miss", "San Diego St"],
+    ["Iowa St", "Lipscomb"],
+    ["Marquette", "New Mexico"],
+    ["Michigan St", "Bryant"]
   ];
 
-  // Each round 2 matchup starts empty
-  const round2Matchups = [
+  const round2 = [
+    [null, null],
+    [null, null],
     [null, null],
     [null, null]
   ];
 
-  // ---- RENDER ----
-  function render() {
-    round1El.innerHTML = "";
-    round2El.innerHTML = "";
+  const round3 = [
+    [null, null],
+    [null, null]
+  ];
 
-    // Render Round 1
-    round1Matchups.forEach((matchup, matchupIndex) => {
+  const round4 = [
+    [null, null]
+  ];
+
+  /* =========================
+     RENDER
+  ========================== */
+
+  function render() {
+    renderRound(round1El, round1, handleRound1Pick);
+    renderRound(round2El, round2, handleRound2Pick);
+    renderRound(round3El, round3, handleRound3Pick);
+    renderRound(round4El, round4, null);
+  }
+
+  function renderRound(container, matchups, clickHandler) {
+    container.innerHTML = "";
+
+    matchups.forEach((matchup, matchupIndex) => {
       const matchEl = document.createElement("div");
       matchEl.className = "matchup";
 
-      matchup.forEach(team => {
+      matchup.forEach((team, slotIndex) => {
         const btn = document.createElement("button");
         btn.className = "team";
-        btn.textContent = team;
+        btn.textContent = team ?? "";
 
-        btn.onclick = () => {
-          selectWinner(matchupIndex, team);
-        };
+        if (team && clickHandler) {
+          btn.onclick = () => clickHandler(matchupIndex, slotIndex, team);
+        } else {
+          btn.disabled = true;
+        }
 
         matchEl.appendChild(btn);
       });
 
-      round1El.appendChild(matchEl);
-    });
-
-    // Render Round 2
-    round2Matchups.forEach(matchup => {
-      const matchEl = document.createElement("div");
-      matchEl.className = "matchup";
-
-      matchup.forEach(team => {
-        const slot = document.createElement("div");
-        slot.className = "team";
-        slot.textContent = team ?? "";
-        matchEl.appendChild(slot);
-      });
-
-      round2El.appendChild(matchEl);
+      container.appendChild(matchEl);
     });
   }
 
-  // ---- LOGIC ----
-  function selectWinner(round1Index, team) {
-    const round2Index = Math.floor(round1Index / 2);
-    const slotIndex = round1Index % 2;
+  /* =========================
+     LOGIC
+  ========================== */
 
-    // Place team in correct slot
-    round2Matchups[round2Index][slotIndex] = team;
+  function handleRound1Pick(matchupIndex, slotIndex, team) {
+    const r2Matchup = Math.floor(matchupIndex / 2);
+    const r2Slot = matchupIndex % 2;
 
-    // Re-render immediately
+    round2[r2Matchup][r2Slot] = team;
+
+    // clear downstream
+    clearRound(round3);
+    clearRound(round4);
+
     render();
+  }
+
+  function handleRound2Pick(matchupIndex, slotIndex, team) {
+    const r3Matchup = Math.floor(matchupIndex / 2);
+    const r3Slot = matchupIndex % 2;
+
+    round3[r3Matchup][r3Slot] = team;
+
+    clearRound(round4);
+
+    render();
+  }
+
+  function handleRound3Pick(matchupIndex, slotIndex, team) {
+    round4[0][matchupIndex] = team;
+    render();
+  }
+
+  function clearRound(round) {
+    round.forEach(matchup => {
+      matchup[0] = null;
+      matchup[1] = null;
+    });
   }
 
   render();
