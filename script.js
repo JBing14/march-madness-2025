@@ -3,10 +3,7 @@ import {
   getFirestore,
   collection,
   addDoc,
-  serverTimestamp,
-  query,
-  where,
-  getDocs
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 /* ================= FIREBASE ================= */
@@ -23,8 +20,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-
 
 /* ================= STATE ================= */
 
@@ -151,10 +146,6 @@ async function submitBracket() {
     return;
   }
 
-  const q = query(collection(db, "brackets"), where("email", "==", email));
-  const snap = await getDocs(q);
-  const entryNumber = snap.size + 1;
-
   const serialize = (round, roundPicks) => {
     const out = {};
     round.forEach((m, i) => {
@@ -172,7 +163,7 @@ async function submitBracket() {
   await addDoc(collection(db, "brackets"), {
     name,
     email,
-    entryName: `${name} ${entryNumber}`,
+    entryName: name, // numbering handled later in admin
     tiebreaker: Number(tiebreaker),
     submittedAt: serverTimestamp(),
     picks: {
@@ -187,5 +178,3 @@ async function submitBracket() {
   alert("Bracket submitted and locked.");
   render();
 }
-
-
