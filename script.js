@@ -5,7 +5,22 @@ const teams = document.querySelectorAll(".team");
 teams.forEach(team => {
   team.addEventListener("click", () => handlePick(team));
 });
+function clearDownstream(region, round, game) {
+  const maxRound = 4; // per region
 
+  for (let r = round + 1; r <= maxRound; r++) {
+    const g = Math.ceil(game / Math.pow(2, r - round));
+
+    const slots = document.querySelectorAll(
+      `.team[data-region="${region}"][data-round="${r}"][data-game="${g}"]`
+    );
+
+    slots.forEach(slot => {
+      slot.textContent = "";
+      slot.classList.add("empty");
+    });
+  }
+}
 function handlePick(teamBtn) {
   // Only block clicks on truly empty slots
   if (teamBtn.classList.contains("empty") && teamBtn.textContent === "") return;
@@ -34,3 +49,4 @@ function handlePick(teamBtn) {
   targetSlots[0].textContent = teamName;
   targetSlots[0].classList.remove("empty");
 }
+
