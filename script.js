@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", function () {
   var round3El = document.getElementById("round-3-left");
   var round4El = document.getElementById("round-4-left");
   var champEl  = document.getElementById("round-5-left");
+  var isLocked = false;
+
 
   if (!round1El || !round2El || !round3El || !round4El || !champEl) {
     console.error("Missing round containers");
@@ -109,6 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function handleRound1Pick(matchupIndex, slotIndex, team) {
+    if (isLocked) return;
     var r2Matchup = Math.floor(matchupIndex / 2);
     var r2Slot = matchupIndex % 2;
 
@@ -121,6 +124,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function handleRound2Pick(matchupIndex, slotIndex, team) {
+    if (isLocked) return;
     var r3Matchup = Math.floor(matchupIndex / 2);
     var r3Slot = matchupIndex % 2;
 
@@ -132,12 +136,28 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function handleRound3Pick(matchupIndex, slotIndex, team) {
+    if (isLocked) return;
     round4[0][matchupIndex] = team;
     champion = null;
     render();
   }
+function isBracketComplete() {
+  if (!champion) return false;
 
+  for (var i = 0; i < round2.length; i++) {
+    if (!round2[i][0] || !round2[i][1]) return false;
+  }
+
+  for (var j = 0; j < round3.length; j++) {
+    if (!round3[j][0] || !round3[j][1]) return false;
+  }
+
+  if (!round4[0][0] || !round4[0][1]) return false;
+
+  return true;
+}
   function handleRound4Pick(matchupIndex, slotIndex, team) {
+    if (isLocked) return;
     champion = team;
     render();
   }
@@ -147,4 +167,5 @@ document.addEventListener("DOMContentLoaded", function () {
   render();
 
 });
+
 
