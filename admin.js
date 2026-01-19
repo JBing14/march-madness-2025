@@ -1,12 +1,12 @@
 import { db, auth } from "./firebase.js";
 import {
   collection,
-  query,
-  orderBy,
   getDocs,
   doc,
   setDoc,
-  getDoc
+  getDoc,
+  query,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 import {
   signInWithEmailAndPassword,
@@ -39,7 +39,11 @@ const loginError = document.getElementById("loginError");
 const adminEmailEl = document.getElementById("adminEmail");
 
 const round1Controls = document.getElementById("round1Controls");
+const round2Controls = document.getElementById("round2Controls");
+const round3Controls = document.getElementById("round3Controls");
+const round4Controls = document.getElementById("round4Controls");
 const championSelect = document.getElementById("championSelect");
+
 const saveResultsBtn = document.getElementById("saveResultsBtn");
 const scoreBtn = document.getElementById("scoreBtn");
 const scoreStatus = document.getElementById("scoreStatus");
@@ -63,11 +67,7 @@ let officialResults = {
 loginBtn.onclick = async () => {
   loginError.textContent = "";
   try {
-    await signInWithEmailAndPassword(
-      auth,
-      emailInput.value,
-      passwordInput.value
-    );
+    await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
   } catch (e) {
     loginError.textContent = e.message;
   }
@@ -92,125 +92,117 @@ onAuthStateChanged(auth, async user => {
 /* ================= INIT ================= */
 
 async function initAdmin() {
-  await buildRound1ControlsFromData();
+  await buildRound1Controls();
   await loadResults();
   await loadSubmissions();
 }
 
 /* ================= BUILD CONTROLS ================= */
 
-async function buildRound1ControlsFromData() {
+async function buildRound1Controls() {
   round1Controls.innerHTML = "";
+  round2Controls.innerHTML = "";
+  round3Controls.innerHTML = "";
+  round4Controls.innerHTML = "";
   championSelect.innerHTML = `<option value="">Select Champion</option>`;
 
   const snap = await getDocs(collection(db, "brackets"));
   if (snap.empty) return;
 
-  const firstBracket = snap.docs[0].data();
-  const round1 = firstBracket.picks.round1;
+  const round1 = snap.docs[0].data().picks.round1;
 
   Object.entries(round1).forEach(([game, data]) => {
-    const select = document.createElement("select");
-    select.dataset.game = game;
-
-    select.innerHTML = `
-      <option value="">${game}</option>
-      <option value="${data.slot1}">${data.slot1}</option>
-      <option value="${data.slot2}">${data.slot2}</option>
-    `;
-
-    round1Controls.appendChild(select);
+    const sel = createSelect(game, [data.slot1, data.slot2]);
+    round1Controls.appendChild(sel);
 
     [data.slot1, data.slot2].forEach(team => {
       if (![...championSelect.options].some(o => o.value === team)) {
-        const opt = document.createElement("option");
-        opt.value = team;
-        opt.textContent = team;
-        championSelect.appendChild(opt);
+        championSelect.appendChild(new Option(team, team));
       }
     });
   });
 }
 
-/* ================= RESULTS ================= */
-
-async function loadResults() {
-  const snap = await getDoc(doc(db, "results", "current"));
-  if (!snap.exists()) return;
-
-  officialResults = snap.data();
-
-  document.querySelectorAll("#round1Controls select").forEach(sel => {
-    if (officialResults.round1?.[sel.dataset.game]) {
-      sel.value = officialResults.round1[sel.dataset.game];
-    }
-  });
-
-  championSelect.value = officialResults.champion || "";
+function createSelect(game, options) {
+  const sel = document.createElement("select");
+  sel.dataset.game = game;
+  sel.innerHTML = `<option value="">${game}</option>`;
+  options.forEach(t => sel.appendChild(new Option(t, t)));
+  sel.onchange = rebuildDownstream;
+  return sel;
 }
 
-saveResultsBtn.onclick = async () => {
-  officialResults.round1 = {};
+/* ================= CASCADE ================= */
 
-  document.querySelectorAll("#round1Controls select").forEach(sel => {
-    if (sel.value) {
-      officialResults.round1[sel.dataset.game] = sel.value;
-    }
+function rebuildDownstream() {
+  buildNextRound(round1Controls, round2Controls, "round2");
+  buildNextRound(round2Controls, round3Controls, "round3");
+  buildNextRound(round3Controls, round4Controls, "round4");
+  buildChampionOptions();
+}
+
+function buildNextRound(from, to, key) {
+  to.innerHTML = "";
+  officialResults[key] = {};
+
+  const winners = [...from.querySelectorAll("select")]
+    .map(s => s.value)
+    .filter(Boolean);
+
+  for (let i = 0; i < winners.length; i += 2) {
+    if (!winners[i + 1]) break;
+    const sel = createSelect(`game${i / 2 + 1}`, [
+      winners[i],
+      winners[i + 1]
+    ]);
+    to.appendChild(sel);
+  }
+}
+
+function buildChampionOptions() {
+  championSelect.innerHTML = `<option value="">Select Champion</option>`;
+  [...round4Controls.querySelectorAll("select")].forEach(sel => {
+    if (sel.value) championSelect.appendChild(new Option(sel.value, sel.value));
   });
+}
 
+/* ================= SAVE RESULTS ================= */
+
+saveResultsBtn.onclick = async () => {
+  officialResults.round1 = collect(round1Controls);
+  officialResults.round2 = collect(round2Controls);
+  officialResults.round3 = collect(round3Controls);
+  officialResults.round4 = collect(round4Controls);
   officialResults.champion = championSelect.value;
 
   await setDoc(doc(db, "results", "current"), officialResults);
   scoreStatus.textContent = "Results saved.";
 };
 
+function collect(container) {
+  const out = {};
+  container.querySelectorAll("select").forEach(sel => {
+    if (sel.value) out[sel.dataset.game] = sel.value;
+  });
+  return out;
+}
+
 /* ================= SCORING ================= */
 
 scoreBtn.onclick = async () => {
   scoreStatus.textContent = "Scoring...";
 
-  const bracketsSnap = await getDocs(collection(db, "brackets"));
+  const snap = await getDocs(collection(db, "brackets"));
 
-  for (const b of bracketsSnap.docs) {
+  for (const b of snap.docs) {
     const p = b.data().picks;
+    const score = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 };
 
-    let score = {
-      r1: 0,
-      r2: 0,
-      r3: 0,
-      r4: 0,
-      r5: 0
-    };
+    score.r1 = scoreRound(p.round1, officialResults.round1, POINTS.r1);
+    score.r2 = scoreRound(p.round2, officialResults.round2, POINTS.r2);
+    score.r3 = scoreRound(p.round3, officialResults.round3, POINTS.r3);
+    score.r4 = scoreRound(p.round4, officialResults.round4, POINTS.r4);
 
-    // Round 1
-    for (const game in officialResults.round1 || {}) {
-      if (p.round1?.[game]?.pick === officialResults.round1[game]) {
-        score.r1 += POINTS.r1;
-      }
-    }
-
-    // Round 2
-    for (const game in officialResults.round2 || {}) {
-      if (p.round2?.[game]?.pick === officialResults.round2[game]) {
-        score.r2 += POINTS.r2;
-      }
-    }
-
-    // Round 3
-    for (const game in officialResults.round3 || {}) {
-      if (p.round3?.[game]?.pick === officialResults.round3[game]) {
-        score.r3 += POINTS.r3;
-      }
-    }
-
-    // Round 4
-    for (const game in officialResults.round4 || {}) {
-      if (p.round4?.[game]?.pick === officialResults.round4[game]) {
-        score.r4 += POINTS.r4;
-      }
-    }
-
-    // Champion
     if (p.champion === officialResults.champion) {
       score.r5 = POINTS.r5;
     }
@@ -228,13 +220,18 @@ scoreBtn.onclick = async () => {
   scoreStatus.textContent = "Scoring complete.";
 };
 
-/* ================= SUBMISSIONS TABLE ================= */
+function scoreRound(picks, results, pts) {
+  let sum = 0;
+  for (const g in results || {}) {
+    if (picks?.[g]?.pick === results[g]) sum += pts;
+  }
+  return sum;
+}
+
+/* ================= SUBMISSIONS ================= */
 
 async function loadSubmissions() {
-  const q = query(
-    collection(db, "brackets"),
-    orderBy("submittedAt", "desc")
-  );
+  const q = query(collection(db, "brackets"), orderBy("submittedAt", "desc"));
   const snap = await getDocs(q);
 
   countEl.textContent = snap.size;
@@ -248,13 +245,8 @@ async function loadSubmissions() {
       <td>${d.data().tiebreaker}</td>
       <td>${d.data().submittedAt?.toDate().toLocaleString()}</td>
     `;
-    tr.onclick = () => {
-      detailsEl.textContent = JSON.stringify(
-        d.data().picks,
-        null,
-        2
-      );
-    };
+    tr.onclick = () =>
+      (detailsEl.textContent = JSON.stringify(d.data().picks, null, 2));
     tableBody.appendChild(tr);
   });
 }
