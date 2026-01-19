@@ -1,70 +1,45 @@
 import { db, auth } from "./firebase.js";
-
 import {
-  collection,
-  query,
-  orderBy,
-  getDocs,
-  doc,
-  setDoc
+  collection, query, orderBy, getDocs, doc, setDoc, getDoc
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
 import {
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
+  signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-/* =========================
-   CONFIG
-========================= */
+/* ===== CONFIG ===== */
+const ADMIN_EMAIL = "your_admin_email@example.com";
 
-// 🔒 CHANGE THIS TO YOUR ADMIN EMAIL
-const ADMIN_EMAIL = "jbgerloff@gmail.com";
-
-/* =========================
-   DOM ELEMENTS
-========================= */
-
+/* ===== DOM ===== */
 const loginDiv = document.getElementById("login");
 const dashboardDiv = document.getElementById("dashboard");
-
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
-
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
 const loginError = document.getElementById("loginError");
+const adminEmailEl = document.getElementById("adminEmail");
+
+const round1Controls = document.getElementById("round1Controls");
+const championSelect = document.getElementById("championSelect");
+const saveResultsBtn = document.getElementById("saveResultsBtn");
+const scoreBtn = document.getElementById("scoreBtn");
+const scoreStatus = document.getElementById("scoreStatus");
 
 const tableBody = document.getElementById("table-body");
 const detailsEl = document.getElementById("details");
 const countEl = document.getElementById("count");
-const adminEmailEl = document.getElementById("adminEmail");
 
-const scoreBtn = document.getElementById("scoreBtn");
-const scoreStatus = document.getElementById("scoreStatus");
-
-/* =========================
-   AUTH HANDLING
-========================= */
-
+/* ===== AUTH ===== */
 loginBtn.onclick = async () => {
   loginError.textContent = "";
-
   try {
-    await signInWithEmailAndPassword(
-      auth,
-      emailInput.value,
-      passwordInput.value
-    );
-  } catch (err) {
-    loginError.textContent = err.message;
+    await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+  } catch (e) {
+    loginError.textContent = e.message;
   }
 };
 
-logoutBtn.onclick = async () => {
-  await signOut(auth);
-};
+logoutBtn.onclick = async () => { await signOut(auth); };
 
 onAuthStateChanged(auth, user => {
   if (!user || user.email !== ADMIN_EMAIL) {
@@ -72,152 +47,144 @@ onAuthStateChanged(auth, user => {
     dashboardDiv.style.display = "none";
     return;
   }
-
   loginDiv.style.display = "none";
   dashboardDiv.style.display = "block";
   adminEmailEl.textContent = user.email;
-
-  loadSubmissions();
+  initAdmin();
 });
 
-/* =========================
-   LOAD SUBMISSIONS
-========================= */
+/* ===== DATA ===== */
+const ROUND1_MATCHUPS = [
+  ["Auburn", "Alabama St"],
+  ["Louisville", "Creighton"],
+  ["Michigan", "UC San Diego"],
+  ["Texas A&M", "Yale"],
+  ["Ole Miss", "San Diego St"],
+  ["Iowa St", "Lipscomb"],
+  ["Marquette", "New Mexico"],
+  ["Michigan St", "Bryant"]
+];
 
-async function loadSubmissions() {
-  tableBody.innerHTML = "";
-  detailsEl.textContent = "Click an entry to view picks…";
+const POINTS = { r1: 1, r2: 3, r3: 5, r4: 7, r5: 20, bonus: 5 };
 
-  const q = query(
-    collection(db, "brackets"),
-    orderBy("submittedAt", "desc")
-  );
+let officialResults = {
+  round1: {},
+  champion: "",
+  bonusWinners: {}
+};
 
-  const snapshot = await getDocs(q);
-  countEl.textContent = snapshot.size;
+/* ===== INIT ===== */
+async function initAdmin() {
+  buildRound1Controls();
+  buildChampionOptions();
+  await loadExistingResults();
+  await loadSubmissions();
+}
 
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${data.entryName}</td>
-      <td>${data.email}</td>
-      <td>${data.tiebreaker}</td>
-      <td>${data.submittedAt?.toDate().toLocaleString() || ""}</td>
+/* ===== UI BUILDERS ===== */
+function buildRound1Controls() {
+  round1Controls.innerHTML = "";
+  ROUND1_MATCHUPS.forEach((m, i) => {
+    const sel = document.createElement("select");
+    sel.dataset.game = `game${i + 1}`;
+    sel.innerHTML = `
+      <option value="">Game ${i + 1}</option>
+      <option value="${m[0]}">${m[0]}</option>
+      <option value="${m[1]}">${m[1]}</option>
     `;
-
-    tr.onclick = () => {
-      detailsEl.textContent = JSON.stringify(data.picks, null, 2);
-    };
-
-    tableBody.appendChild(tr);
+    round1Controls.appendChild(sel);
   });
 }
 
-/* =========================
-   SCORING ENGINE v1
-========================= */
+function buildChampionOptions() {
+  championSelect.innerHTML = `<option value="">Select Champion</option>`;
+  ROUND1_MATCHUPS.flat().forEach(t => {
+    const o = document.createElement("option");
+    o.value = t; o.textContent = t;
+    championSelect.appendChild(o);
+  });
+}
 
-const POINTS = {
-  r1: 1,
-  r2: 3,
-  r3: 5,
-  r4: 7,
-  r5: 20,
-  bonus: 5
+/* ===== RESULTS SAVE/LOAD ===== */
+saveResultsBtn.onclick = async () => {
+  officialResults.round1 = {};
+  document.querySelectorAll("#round1Controls select").forEach(sel => {
+    if (sel.value) officialResults.round1[sel.dataset.game] = sel.value;
+  });
+
+  officialResults.champion = championSelect.value;
+
+  const bonuses = {};
+  document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    if (cb.checked) bonuses[cb.value] = cb.value;
+  });
+  officialResults.bonusWinners = bonuses;
+
+  await setDoc(doc(db, "results", "current"), officialResults);
+  scoreStatus.textContent = "Results saved.";
 };
 
-// ⚠️ TEMPORARY — hardcoded official results
-// We replace this with UI next
-const OFFICIAL_RESULTS = {
-  round1: {
-    game1: "Auburn",
-    game2: "Louisville",
-    game3: "Michigan",
-    game4: "Texas A&M"
-  },
-  round2: {},
-  round3: {},
-  round4: {},
-  champion: "Auburn",
-  bonusWinners: {
-    bonus1: "Auburn",
-    bonus2: "Michigan",
-    bonus3: "Marquette",
-    bonus4: "Iowa St"
-  }
-};
+async function loadExistingResults() {
+  const snap = await getDoc(doc(db, "results", "current"));
+  if (!snap.exists()) return;
+  officialResults = snap.data();
 
+  Object.entries(officialResults.round1 || {}).forEach(([g, v]) => {
+    const sel = document.querySelector(`select[data-game="${g}"]`);
+    if (sel) sel.value = v;
+  });
+  championSelect.value = officialResults.champion || "";
+}
+
+/* ===== SCORING ===== */
 scoreBtn.onclick = async () => {
-  scoreStatus.textContent = "Scoring brackets...";
-
-  // Save official results
-  await setDoc(doc(db, "results", "current"), OFFICIAL_RESULTS);
-
+  if (!auth.currentUser || auth.currentUser.email !== ADMIN_EMAIL) {
+    alert("Admin only");
+    return;
+  }
+  scoreStatus.textContent = "Scoring...";
   const bracketsSnap = await getDocs(collection(db, "brackets"));
 
-  for (const bracketDoc of bracketsSnap.docs) {
-    const bracket = bracketDoc.data().picks;
+  for (const d of bracketsSnap.docs) {
+    const p = d.data().picks;
+    let score = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0, bonus: 0 };
 
-    let score = {
-      r1: 0,
-      r2: 0,
-      r3: 0,
-      r4: 0,
-      r5: 0,
-      bonus: 0
-    };
-
-    // Round scorer
-    function scoreRound(userRound, officialRound, pts) {
-      let total = 0;
-
-      for (const game in officialRound) {
-        const winner = officialRound[game];
-        const pick = userRound[game];
-
-        if (
-          pick &&
-          (pick.slot1 === winner || pick.slot2 === winner)
-        ) {
-          total += pts;
-        }
-      }
-
-      return total;
+    for (const g in officialResults.round1) {
+      const win = officialResults.round1[g];
+      const pick = p.round1[g];
+      if (pick && (pick.slot1 === win || pick.slot2 === win)) score.r1 += POINTS.r1;
     }
+    if (p.champion === officialResults.champion) score.r5 = POINTS.r5;
+    score.bonus = Object.keys(officialResults.bonusWinners).length * POINTS.bonus;
 
-    score.r1 = scoreRound(bracket.round1, OFFICIAL_RESULTS.round1, POINTS.r1);
-    score.r2 = scoreRound(bracket.round2, OFFICIAL_RESULTS.round2, POINTS.r2);
-    score.r3 = scoreRound(bracket.round3, OFFICIAL_RESULTS.round3, POINTS.r3);
-    score.r4 = scoreRound(bracket.round4, OFFICIAL_RESULTS.round4, POINTS.r4);
+    const total = score.r1 + score.r2 + score.r3 + score.r4 + score.r5 + score.bonus;
 
-    if (bracket.champion === OFFICIAL_RESULTS.champion) {
-      score.r5 = POINTS.r5;
-    }
-
-    for (const key in OFFICIAL_RESULTS.bonusWinners) {
-      const team = OFFICIAL_RESULTS.bonusWinners[key];
-
-      if (
-        Object.values(bracket.round1).some(
-          g => g.slot1 === team || g.slot2 === team
-        )
-      ) {
-        score.bonus += POINTS.bonus;
-      }
-    }
-
-    const total =
-      score.r1 + score.r2 + score.r3 + score.r4 + score.r5 + score.bonus;
-
-    await setDoc(doc(db, "scores", bracketDoc.id), {
-      entryName: bracketDoc.data().entryName,
+    await setDoc(doc(db, "scores", d.id), {
+      entryName: d.data().entryName,
       total,
       rounds: score
     });
   }
-
   scoreStatus.textContent = "Scoring complete.";
 };
+
+/* ===== SUBMISSIONS TABLE ===== */
+async function loadSubmissions() {
+  tableBody.innerHTML = "";
+  const q = query(collection(db, "brackets"), orderBy("submittedAt", "desc"));
+  const snap = await getDocs(q);
+  countEl.textContent = snap.size;
+
+  snap.forEach(docSnap => {
+    const d = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${d.entryName}</td>
+      <td>${d.email}</td>
+      <td>${d.tiebreaker}</td>
+      <td>${d.submittedAt?.toDate().toLocaleString() || ""}</td>
+    `;
+    tr.onclick = () => detailsEl.textContent = JSON.stringify(d.picks, null, 2);
+    tableBody.appendChild(tr);
+  });
+}
