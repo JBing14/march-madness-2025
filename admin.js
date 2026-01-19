@@ -1,12 +1,15 @@
 import { db, auth } from "./firebase.js";
 import {
   collection,
+  query,
+  orderBy,
   getDocs,
   doc,
   setDoc,
   getDoc,
-  query,
-  orderBy
+  onSnapshot,
+  deleteDoc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 import {
   signInWithEmailAndPassword,
@@ -14,19 +17,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
-/* ================= CONFIG ================= */
-
 const ADMIN_EMAIL = "jbgerloff@gmail.com";
-
-const POINTS = {
-  r1: 1,
-  r2: 3,
-  r3: 5,
-  r4: 7,
-  r5: 20
-};
-
-/* ================= DOM ================= */
 
 const loginDiv = document.getElementById("login");
 const dashboardDiv = document.getElementById("dashboard");
@@ -38,34 +29,34 @@ const passwordInput = document.getElementById("password");
 const loginError = document.getElementById("loginError");
 const adminEmailEl = document.getElementById("adminEmail");
 
-const round1Controls = document.getElementById("round1Controls");
-const round2Controls = document.getElementById("round2Controls");
-const round3Controls = document.getElementById("round3Controls");
-const round4Controls = document.getElementById("round4Controls");
-const championSelect = document.getElementById("championSelect");
-
+const resultsControls = document.getElementById("resultsControls");
 const saveResultsBtn = document.getElementById("saveResultsBtn");
 const scoreBtn = document.getElementById("scoreBtn");
 const scoreStatus = document.getElementById("scoreStatus");
+const exportPdf = document.getElementById("exportPdf");
 
 const tableBody = document.getElementById("table-body");
 const detailsEl = document.getElementById("details");
 const countEl = document.getElementById("count");
+const editForm = document.getElementById("editForm");
+const editName = document.getElementById("editName");
+const saveEdit = document.getElementById("saveEdit");
+const cancelEdit = document.getElementById("cancelEdit");
 
-/* ================= STATE ================= */
-
-let officialResults = {
-  round1: {},
-  round2: {},
-  round3: {},
-  round4: {},
-  champion: ""
+const POINTS = {
+  round1: 1, // R64
+  round2: 3, // R32
+  round3: 5, // S16
+  round4: 7, // E8
+  semis: 10, // FF
+  championship: 20, // Champ
+  bonus: 5
 };
 
-/* ================= AUTH ================= */
+let officialResults = { regions: [], finalFour: {}, bonuses: [] };
+let selectedBracketId = null;
 
 loginBtn.onclick = async () => {
-  loginError.textContent = "";
   try {
     await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
   } catch (e) {
@@ -81,188 +72,208 @@ onAuthStateChanged(auth, async user => {
     dashboardDiv.style.display = "none";
     return;
   }
-
   loginDiv.style.display = "none";
   dashboardDiv.style.display = "block";
   adminEmailEl.textContent = user.email;
-
   await initAdmin();
 });
 
-/* ================= INIT ================= */
-
 async function initAdmin() {
-  await buildRound1Controls();
-  await loadResults();          // MUST load before scoring
-  await loadSubmissions();      // MUST run AFTER auth
+  buildControls();
+  await loadResults();
+  const q = query(collection(db, "brackets"), orderBy("submittedAt", "desc"));
+  onSnapshot(q, snap => loadSubmissions(snap));
 }
 
-/* ================= BUILD ROUND 1 ================= */
+function buildControls() {
+  resultsControls.innerHTML = '';
+  const regions = ['East', 'West', 'South', 'Midwest'];
+  regions.forEach((region, rIdx) => {
+    const regionDiv = document.createElement('div');
+    regionDiv.className = 'col-md-3';
+    regionDiv.innerHTML = `<h4>${region}</h4>`;
+    ['round1', 'round2', 'round3', 'round4'].forEach(round => {
+      const numGames = round === 'round1' ? 8 : round === 'round2' ? 4 : round === 'round3' ? 2 : 1;
+      for (let g = 1; g <= numGames; g++) {
+        const sel = document.createElement('select');
+        sel.className = 'form-select mb-2';
+        sel.dataset.game = `${region.toLowerCase()}-${round}-game${g}`;
+        sel.innerHTML = `<option value="">${round.charAt(0).toUpperCase() + round.slice(1)} Game ${g} Winner</option>`;
+        // Populate options from bracket teams or previous winners; for simplicity, manual entry or from known teams
+        // For real, you'd fetch from a teams list; here assume admin knows team names
+        regionDiv.appendChild(sel);
+      }
+    });
+    resultsControls.appendChild(regionDiv);
+  });
 
-async function buildRound1Controls() {
-  round1Controls.innerHTML = "";
-  round2Controls.innerHTML = "";
-  round3Controls.innerHTML = "";
-  round4Controls.innerHTML = "";
-  championSelect.innerHTML = `<option value="">Select Champion</option>`;
+  // Final Four
+  const ffDiv = document.createElement('div');
+  ffDiv.className = 'col-md-12 mt-3';
+  ffDiv.innerHTML = `<h4>Final Four & Champion</h4>`;
+  for (let s = 1; s <= 2; s++) {
+    const sel = document.createElement('select');
+    sel.className = 'form-select mb-2';
+    sel.dataset.game = `semis-game${s}`;
+    sel.innerHTML = `<option value="">Semi ${s} Winner</option>`;
+    ffDiv.appendChild(sel);
+  }
+  const champSel = document.createElement('select');
+  champSel.className = 'form-select mb-2';
+  champSel.dataset.game = 'championship-game1';
+  champSel.innerHTML = `<option value="">Champion</option>`;
+  ffDiv.appendChild(champSel);
+  resultsControls.appendChild(ffDiv);
 
-  const snap = await getDocs(collection(db, "brackets"));
-  if (snap.empty) return;
-
-  const round1 = snap.docs[0].data().picks.round1;
-
-  Object.entries(round1).forEach(([game, data]) => {
-    round1Controls.appendChild(
-      createSelect(game, [data.slot1, data.slot2], 1)
-    );
+  // Bonuses: Populate with all possible games
+  ['bonus1', 'bonus2', 'bonus3', 'bonus4'].forEach(b => {
+    const sel = document.getElementById(b);
+    sel.innerHTML = '<option value="">Select Bonus Game</option>';
+    regions.forEach(r => {
+      ['round1', 'round2', 'round3', 'round4'].forEach(round => {
+        const num = round === 'round1' ? 8 : round === 'round2' ? 4 : 2;
+        for (let g = 1; g <= num; g++) {
+          sel.innerHTML += `<option value="${r.toLowerCase()}-${round}-game${g}">${r} ${round} Game ${g}</option>`;
+        }
+      });
+    });
   });
 }
-
-/* ================= SELECT CREATION ================= */
-
-function createSelect(game, options, level) {
-  const sel = document.createElement("select");
-  sel.dataset.game = game;
-  sel.dataset.level = level;
-  sel.innerHTML = `<option value="">${game}</option>`;
-  options.forEach(t => sel.appendChild(new Option(t, t)));
-  sel.onchange = () => rebuildFromLevel(level);
-  return sel;
-}
-
-/* ================= CASCADE ================= */
-
-function rebuildFromLevel(level) {
-  if (level <= 1) {
-    buildNextRound(round1Controls, round2Controls, "round2", 2);
-    round3Controls.innerHTML = "";
-    round4Controls.innerHTML = "";
-  }
-  if (level <= 2) {
-    buildNextRound(round2Controls, round3Controls, "round3", 3);
-    round4Controls.innerHTML = "";
-  }
-  if (level <= 3) {
-    buildNextRound(round3Controls, round4Controls, "round4", 4);
-  }
-  buildChampionOptions();
-}
-
-function buildNextRound(from, to, key, level) {
-  to.innerHTML = "";
-  officialResults[key] = {};
-
-  const winners = [...from.querySelectorAll("select")]
-    .map(s => s.value)
-    .filter(Boolean);
-
-  for (let i = 0; i < winners.length; i += 2) {
-    if (!winners[i + 1]) break;
-    to.appendChild(
-      createSelect(
-        `game${i / 2 + 1}`,
-        [winners[i], winners[i + 1]],
-        level
-      )
-    );
-  }
-}
-
-function buildChampionOptions() {
-  championSelect.innerHTML = `<option value="">Select Champion</option>`;
-  [...round4Controls.querySelectorAll("select")].forEach(sel => {
-    if (sel.value) championSelect.appendChild(new Option(sel.value, sel.value));
-  });
-}
-
-/* ================= RESULTS ================= */
 
 async function loadResults() {
   const snap = await getDoc(doc(db, "results", "current"));
-  if (!snap.exists()) return;
-  officialResults = snap.data();
+  if (snap.exists()) {
+    officialResults = snap.data();
+    // Populate selects with saved values
+    document.querySelectorAll('#resultsControls select').forEach(sel => {
+      if (officialResults[sel.dataset.game]) sel.value = officialResults[sel.dataset.game];
+    });
+    ['bonus1', 'bonus2', 'bonus3', 'bonus4'].forEach((b, i) => {
+      document.getElementById(b).value = officialResults.bonuses[i] || '';
+    });
+  }
 }
 
 saveResultsBtn.onclick = async () => {
-  officialResults.round1 = collect(round1Controls);
-  officialResults.round2 = collect(round2Controls);
-  officialResults.round3 = collect(round3Controls);
-  officialResults.round4 = collect(round4Controls);
-  officialResults.champion = championSelect.value;
-
+  officialResults = { bonuses: [] };
+  document.querySelectorAll('#resultsControls select').forEach(sel => {
+    if (sel.value) officialResults[sel.dataset.game] = sel.value;
+  });
+  ['bonus1', 'bonus2', 'bonus3', 'bonus4'].forEach(b => {
+    officialResults.bonuses.push(document.getElementById(b).value);
+  });
   await setDoc(doc(db, "results", "current"), officialResults);
   scoreStatus.textContent = "Results saved.";
 };
 
-/* ================= SCORING ================= */
-
 scoreBtn.onclick = async () => {
   scoreStatus.textContent = "Scoring...";
-
-  // ENSURE we score against saved results
-  await loadResults();
-
-  const snap = await getDocs(collection(db, "brackets"));
-
-  for (const b of snap.docs) {
+  const official = (await getDoc(doc(db, "results", "current"))).data() || {};
+  const brackets = await getDocs(collection(db, "brackets"));
+  for (const b of brackets.docs) {
     const p = b.data().picks;
-    const score = { r1: 0, r2: 0, r3: 0, r4: 0, r5: 0 };
+    let score = { total: 0, rounds: {}, bonuses: 0 };
 
-    score.r1 = scoreRound(p.round1, officialResults.round1, POINTS.r1);
-    score.r2 = scoreRound(p.round2, officialResults.round2, POINTS.r2);
-    score.r3 = scoreRound(p.round3, officialResults.round3, POINTS.r3);
-    score.r4 = scoreRound(p.round4, officialResults.round4, POINTS.r4);
+    // Score regions
+    p.regions.forEach((r, rIdx) => {
+      for (const round in POINTS) if (round !== 'bonus') {
+        for (const game in r[round]) {
+          const key = `${regions[rIdx].name.toLowerCase()}-${round}-${game}`;
+          if (official[key] && r[round][game].pick === official[key]) {
+            score.rounds[round] = (score.rounds[round] || 0) + POINTS[round];
+            score.total += POINTS[round];
+          }
+        }
+      }
+    });
 
-    if (p.champion === officialResults.champion) {
-      score.r5 = POINTS.r5;
+    // Score final four
+    for (const stage in p.finalFour) if (stage !== 'champion') {
+      for (const game in p.finalFour[stage]) {
+        const key = `${stage}-${game}`;
+        if (official[key] && p.finalFour[stage][game].pick === official[key]) {
+          score.total += POINTS[stage === 'semis' ? 'semis' : 'championship'];
+        }
+      }
     }
+
+    // Bonuses
+    official.bonuses.forEach(bonusGame => {
+      if (!bonusGame) return;
+      const [region, round, game] = bonusGame.split('-');
+      const pick = p.regions[regions.findIndex(r => r.name.toLowerCase() === region)][round][game]?.pick;
+      if (pick === official[bonusGame]) score.bonuses += POINTS.bonus;
+    });
+    score.total += score.bonuses;
 
     await setDoc(doc(db, "scores", b.id), {
       entryName: b.data().entryName,
-      total:
-        score.r1 + score.r2 + score.r3 + score.r4 + score.r5,
-      rounds: score
+      total: score.total,
+      tiebreaker: b.data().tiebreaker,
+      details: score
     });
   }
-
   scoreStatus.textContent = "Scoring complete.";
 };
 
-function scoreRound(picks, results, pts) {
-  let sum = 0;
-  for (const g in results || {}) {
-    if (picks?.[g]?.pick === results[g]) sum += pts;
-  }
-  return sum;
-}
-
-/* ================= SUBMISSIONS ================= */
-
-async function loadSubmissions() {
-  const q = query(collection(db, "brackets"), orderBy("submittedAt", "desc"));
-  const snap = await getDocs(q);
-
+function loadSubmissions(snap) {
   countEl.textContent = snap.size;
   tableBody.innerHTML = "";
-
   snap.forEach(d => {
     const tr = document.createElement("tr");
+    tr.dataset.id = d.id;
     tr.innerHTML = `
       <td>${d.data().entryName}</td>
       <td>${d.data().email}</td>
       <td>${d.data().tiebreaker}</td>
-      <td>${d.data().submittedAt?.toDate().toLocaleString()}</td>
+      <td>${d.data().submittedAt?.toDate().toLocaleString() || 'N/A'}</td>
+      <td>
+        <button class="btn btn-sm btn-warning edit">Edit</button>
+        <button class="btn btn-sm btn-danger delete">Delete</button>
+      </td>
     `;
-    tr.onclick = () =>
-      (detailsEl.textContent = JSON.stringify(d.data().picks, null, 2));
+    tr.querySelector('.edit').onclick = () => editBracket(d.id, d.data().entryName);
+    tr.querySelector('.delete').onclick = () => deleteBracket(d.id);
+    tr.onclick = (e) => {
+      if (e.target.tagName !== 'BUTTON') detailsEl.textContent = JSON.stringify(d.data().picks, null, 2);
+    };
     tableBody.appendChild(tr);
   });
 }
 
-function collect(container) {
-  const out = {};
-  container.querySelectorAll("select").forEach(sel => {
-    if (sel.value) out[sel.dataset.game] = sel.value;
-  });
-  return out;
+function editBracket(id, currentName) {
+  selectedBracketId = id;
+  editName.value = currentName;
+  editForm.style.display = 'block';
 }
+
+saveEdit.onclick = async () => {
+  if (selectedBracketId) {
+    await updateDoc(doc(db, "brackets", selectedBracketId), { entryName: editName.value });
+    editForm.style.display = 'none';
+  }
+};
+
+cancelEdit.onclick = () => {
+  editForm.style.display = 'none';
+};
+
+async function deleteBracket(id) {
+  if (confirm('Delete this bracket?')) {
+    await deleteDoc(doc(db, "brackets", id));
+    await deleteDoc(doc(db, "scores", id));
+  }
+}
+
+exportPdf.onclick = async () => {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  pdf.text('Leaderboard', 10, 10);
+  const scores = await getDocs(query(collection(db, "scores"), orderBy("total", "desc")));
+  let y = 20;
+  scores.forEach((d, idx) => {
+    pdf.text(`${idx+1}. ${d.data().entryName} - ${d.data().total} pts (Tie: ${d.data().tiebreaker})`, 10, y);
+    y += 10;
+  });
+  pdf.save('leaderboard.pdf');
+};
