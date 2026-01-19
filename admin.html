@@ -2,193 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin - March Madness 2025</title>
-  <!-- Firebase Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-  <!-- jQuery (for potential admin UI enhancements) -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <title>Admin – March Madness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
-    /* --- Basic styles similar to user page --- */
     body {
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #003087, #ffffff);
-      margin: 0; padding: 20px;
-      color: #333;
-    }
-    header {
-      text-align: center;
       padding: 20px;
-      background: rgba(255,255,255,0.9);
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    h1 { color: #003087; margin: 0; font-size: 2.5em; }
-    main { max-width: 1200px; margin: 20px auto; }
-    .button {
-      padding: 12px 20px;
-      font-size: 16px;
-      margin: 10px;
-      border: none;
-      border-radius: 5px;
-      background: #003087;
-      color: white;
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #f4f4f4;
+    }
+
+    tr:hover {
+      background: #f9f9f9;
       cursor: pointer;
     }
-    .button:hover { background: #00205b; }
-    table {
-      width: 100%; border-collapse: collapse; margin-top: 20px;
+
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      overflow-x: auto;
+      margin-top: 20px;
     }
-    th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-    th { background: #003087; color: white; }
-    tr:hover { background-color: #f1f1f1; cursor: pointer; }
-    pre { background: #f9f9f9; padding: 10px; border-radius: 5px; }
   </style>
 </head>
+
 <body>
-  <header>
-    <h1>Admin Dashboard</h1>
-  </header>
-  <main>
-    <!-- Admin password prompt will appear on load -->
-    <div id="adminControls" style="display:none;">
-      <!-- Official Results: For simplicity, we let you enter JSON for official results. -->
-      <h2>Enter Official Results</h2>
-      <textarea id="officialResultsInput" rows="10" style="width:100%;" placeholder="Paste your official bracket results JSON here"></textarea>
-      <br/>
-      <button class="button" id="saveResults">Save Official Results</button>
-      <hr/>
-      <!-- Leaderboard Section -->
-      <button class="button" id="refreshLeaderboard">Refresh Leaderboard</button>
-      <div id="leaderboardTable"></div>
-    </div>
-  </main>
-  
-  <script>
-    /****** Firebase Setup ******/
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "marchmadness2025.firebaseapp.com",
-      projectId: "marchmadness2025",
-      storageBucket: "marchmadness2025.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
 
-    /****** Simple Admin Authentication ******/
-    const adminPassword = "admin2025"; // Change this to a secret password of your choice.
-    let enteredPassword = prompt("Enter admin password:");
-    if (enteredPassword !== adminPassword) {
-      alert("Incorrect password. Access denied.");
-      document.body.innerHTML = "<h2>Access Denied</h2>";
-    } else {
-      document.getElementById("adminControls").style.display = "block";
-    }
+<h1>Admin Dashboard</h1>
 
-    /****** Save Official Results ******/
-    document.getElementById("saveResults").addEventListener("click", async function() {
-      let officialResults;
-      try {
-        officialResults = JSON.parse(document.getElementById("officialResultsInput").value);
-      } catch (e) {
-        return alert("Invalid JSON format for official results.");
-      }
-      try {
-        await db.collection("official").doc("results").set({
-          bracketData: officialResults,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        alert("Official results saved successfully.");
-      } catch (error) {
-        console.error("Error saving official results:", error);
-        alert("Error saving official results.");
-      }
-    });
+<p><strong>Total Submissions:</strong> <span id="count">0</span></p>
 
-    /****** Scoring Function ******/
-    // This function compares official bracket data against a user's submission
-    // and calculates points per round based on your weights and bonus matches.
-    // For simplicity, we assume both officialData and userData have a similar structure.
-    function calculateScore(officialData, userData) {
-      // Define points per round:
-      const roundPoints = [1, 3, 5, 7, 10, 20];
-      let score = 0;
-      // (Below is a simplified, illustrative approach.)
-      if (!officialData || !userData) return score;
-      // For each round, assume officialData.results is an array of rounds,
-      // and each round is an array of match results.
-      officialData.results && officialData.results.forEach((round, rIndex) => {
-        if (userData.results && userData.results[rIndex]) {
-          round.forEach((match, mIndex) => {
-            // Check if the user's predicted winner (assumed to be stored under .player) matches the official one.
-            if (userData.results[rIndex][mIndex] && userData.results[rIndex][mIndex].player === match.player) {
-              score += roundPoints[rIndex];
-            }
-          })
-        }
-      });
-      // Bonus Points: Here we check specific “bonus” boxes (the ones you mentioned) and award 5 points if correct.
-      // You might have to hardcode the indices (e.g., officialData.bonus might have four keys).
-      if (officialData.bonus && userData.bonus) {
-        ["upperLeft", "upperRight", "lowerLeft", "lowerRight"].forEach(key => {
-          if (officialData.bonus[key] === userData.bonus[key]) {
-            score += 5;
-          }
-        });
-      }
-      return score;
-    }
+<table>
+  <thead>
+    <tr>
+      <th>Entry Name</th>
+      <th>Email</th>
+      <th>Tiebreaker</th>
+      <th>Submitted At</th>
+    </tr>
+  </thead>
+  <tbody id="table-body"></tbody>
+</table>
 
-    /****** Manual Refresh Leaderboard ******/
-    document.getElementById("refreshLeaderboard").addEventListener("click", async function() {
-      // First, get the official results from Firestore.
-      let officialDoc;
-      try {
-        officialDoc = await db.collection("official").doc("results").get();
-      } catch (error) {
-        return alert("Error retrieving official results.");
-      }
-      if (!officialDoc.exists) {
-        return alert("No official results found. Please save them first.");
-      }
-      const officialData = officialDoc.data().bracketData;
-      // Now query all user submissions (brackets)
-      let submissionsQuery;
-      try {
-        submissionsQuery = await db.collection("brackets").orderBy("submittedAt", "asc").get();
-      } catch (error) {
-        return alert("Error retrieving user submissions.");
-      }
-      let leaderboardHTML = "<table><tr><th>Bracket</th><th>Name</th><th>Email</th><th>Timestamp</th><th>Total Points</th></tr>";
-      submissionsQuery.forEach(doc => {
-        const data = doc.data();
-        // We assume here that the user bracket data has a similar structure as the official (for scoring purposes).
-        // In practice, you may need to massage the data.
-        const leftScore = calculateScore(officialData.leftBracket || {}, data.leftBracket);
-        const rightScore = calculateScore(officialData.rightBracket || {}, data.rightBracket);
-        const totalScore = leftScore + rightScore;  // plus bonus if stored in your data
-        const submittedTime = data.submittedAt ? new Date(data.submittedAt.toDate()).toLocaleString() : "N/A";
-        // Each submission’s label includes the bracket name provided by the user.
-        leaderboardHTML += `<tr data-json='${JSON.stringify(data).replace(/'/g, "&apos;")}'>
-          <td>${data.bracketName}</td>
-          <td>${data.name}</td>
-          <td>${data.email}</td>
-          <td>${submittedTime}</td>
-          <td>${totalScore}</td>
-          </tr>`;
-      });
-      leaderboardHTML += "</table>";
-      document.getElementById("leaderboardTable").innerHTML = leaderboardHTML;
+<h2>Selected Bracket (Raw)</h2>
+<pre id="details">Click an entry to view picks…</pre>
 
-      // Add click events on table rows to show full submission details
-      $("tr[data-json]").click(function() {
-        const details = $(this).attr("data-json");
-        alert("Submission details:\n" + details);
-      });
-    });
-  </script>
+<script type="module" src="admin.js"></script>
 </body>
 </html>
