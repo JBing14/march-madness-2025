@@ -132,7 +132,7 @@ function renderBracket() {
         const matchupEl = document.createElement("div");
         matchupEl.className = "matchup";
 
-        const slots = round === 1 ? 2 : 1;
+        const slots = 2;
 
         for (let s = 0; s < slots; s++) {
           const btn = document.createElement("button");
@@ -214,3 +214,4 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("submitBracket")
     .addEventListener("click", submitBracket);
 });
+
