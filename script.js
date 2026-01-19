@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderRound(round1El, round1, handleRound1Pick);
     renderRound(round2El, round2, handleRound2Pick);
     renderRound(round3El, round3, handleRound3Pick);
-    renderRound(round4El, round4, null);
+    renderRound(round4El, round4, handleRound4Pick);
   }
 
   function renderRound(container, matchups, clickHandler) {
@@ -112,4 +112,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   render();
+}
+
+function handleRound4Pick(matchupIndex, slotIndex, team) {
+  // Final champion slot
+  const champEl = document.getElementById("round-5-left");
+  champEl.innerHTML = "";
+
+  const champ = document.createElement("div");
+  champ.className = "matchup";
+
+  const champBtn = document.createElement("button");
+  champBtn.className = "team champion";
+  champBtn.textContent = team;
+  champBtn.disabled = true;
+
+  champ.appendChild(champBtn);
+  champEl.appendChild(champ);
 });
+
