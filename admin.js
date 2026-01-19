@@ -223,7 +223,14 @@ scoreBtn.onclick = async () => {
     for (const game in officialResults.round1) {
       const winner = officialResults.round1[game];
       const userPick = p.round1?.[game]?.pick;
-
+console.log(
+  "SCORING",
+  game,
+  "winner:",
+  winner,
+  "userPick:",
+  userPick
+);
       if (userPick === winner) {
         score.r1 += POINTS.r1;
       }
@@ -279,3 +286,4 @@ async function loadSubmissions() {
     tableBody.appendChild(tr);
   });
 }
+
