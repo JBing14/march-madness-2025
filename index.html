@@ -1,24 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>March Madness 2025 Bracket</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>March Madness - Bracket Submission</title>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Holtwood+One+SC|Kaushan+Script|Abel|Roboto+Condensed:700' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-light">
-  <div class="container my-4">
-    <h1 class="text-center text-primary">March Madness 2025 Bracket</h1>
-    <div id="bracket" class="bracket row justify-content-center overflow-auto"></div>
-    <div id="form" class="submission-form mt-4 text-center">
-      <input id="name" class="form-control d-inline-block w-auto me-2" placeholder="Name" required />
-      <input id="email" class="form-control d-inline-block w-auto me-2" placeholder="Email" type="email" required />
-      <input id="tiebreaker" class="form-control d-inline-block w-auto me-2" placeholder="Championship Total Score" type="number" required />
-      <button id="submitBtn" class="btn btn-primary">Submit Bracket</button>
-    </div>
-    <div id="confirmation" class="alert alert-success mt-3" style="display:none;">Bracket submitted! View your locked bracket below.</div>
-  </div>
-  <script type="module" src="script.js"></script>
+<body>
+    <header class="hero">
+        <div class="hero-wrap">
+            <p class="intro">Interactive</p>
+            <h1>March Madness</h1>
+            <p class="year"><i class="fa fa-star"></i> Bracket Challenge <i class="fa fa-star"></i></p>
+        </div>
+    </header>
+
+    <nav><a href="leaderboard.html">Leaderboard</a> | <a href="admin.html" class="subtle">Admin</a></nav>
+
+    <section id="user-form">
+        <input type="text" id="name" placeholder="Your Name" required>
+        <input type="email" id="email" placeholder="Your Email" required>
+        <input type="number" id="tiebreaker" placeholder="Championship Tiebreaker Score" required>
+        <button id="submitBtn">Submit Bracket</button>
+        <p id="error" class="error"></p>
+        <div id="confirmation" class="alert" style="display:none; color:green;">Bracket submitted! View your locked bracket below.</div>
+    </section>
+
+    <section id="bracket">
+        <div class="bracket-wrapper">
+            <div class="round round-1 left" id="round-1-left"><h3>1st ROUND</h3></div>
+            <div class="round round-2 left" id="round-2-left"><h3>2nd ROUND</h3></div>
+            <div class="round round-3 left" id="round-3-left"><h3>SWEET 16</h3></div>
+            <div class="round round-4 left" id="round-4-left"><h3>ELITE EIGHT</h3></div>
+            <div class="round round-5 left" id="round-5-left"><h3>FINAL FOUR</h3></div>
+            <div class="round round-6 left" id="round-6-left"><h3>CHAMPIONSHIP</h3></div>
+            <div class="round round-7 center" id="champion"><h3>CHAMPION</h3></div>
+            <div class="round round-6 right" id="round-6-right"><h3>CHAMPIONSHIP</h3></div>
+            <div class="round round-5 right" id="round-5-right"><h3>FINAL FOUR</h3></div>
+            <div class="round round-4 right" id="round-4-right"><h3>ELITE EIGHT</h3></div>
+            <div class="round round-3 right" id="round-3-right"><h3>SWEET 16</h3></div>
+            <div class="round round-2 right" id="round-2-right"><h3>2nd ROUND</h3></div>
+            <div class="round round-1 right" id="round-1-right"><h3>1st ROUND</h3></div>
+        </div>
+    </section>
+
+    <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB27qEP0k2PR8Zz_z_A8KjGcXvxX9OROQA",
+            authDomain: "marchmadness2025-24f04.firebaseapp.com",
+            projectId: "marchmadness2025-24f04",
+            storageBucket: "marchmadness2025-24f04.firebasestorage.app",
+            messagingSenderId: "916205408985",
+            appId: "1:916205408985:web:1dd57fc8704c6c0e8fe4c8",
+            measurementId: "G-TKTZB2FFRB"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+    <script src="script.js"></script>
 </body>
 </html>
