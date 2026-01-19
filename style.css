@@ -1,51 +1,113 @@
 body {
   font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  margin: 0;
+  padding: 20px;
+  color: #0C2340; /* NCAA blue */
 }
 
-.title {
-  text-align: center;
+h1, h2 {
+  color: #F56600; /* NCAA orange */
 }
 
 .bracket {
   display: flex;
-  justify-content: space-between;
-}
-
-.side {
-  width: 48%;
-  display: flex;
-  flex-direction: column;
+  justify-content: space-around;
+  gap: 20px;
+  overflow-x: auto;
+  padding: 10px;
 }
 
 .region {
-  margin-bottom: 40px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  min-width: 250px;
+  border: 1px solid #0C2340;
+  position: relative;
 }
 
 .round {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.round strong {
+  text-align: center;
+  display: block;
   margin-bottom: 10px;
 }
 
-.slot {
-  width: 48%;
-  margin: 1%;
-  padding: 6px;
-  border: 1px solid #333;
+.matchup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.matchup::after {
+  content: '';
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  width: 30px;
+  height: 2px;
+  background: #ccc;
+  z-index: -1;
+}
+
+.round:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -15px;
+  width: 2px;
+  background: #ccc;
+  z-index: -1;
+}
+
+.team {
+  padding: 8px;
+  border: 1px solid #ccc;
+  background: #fff;
   cursor: pointer;
+  text-align: left;
+  border-radius: 5px;
+  width: 100%;
 }
 
-.slot.empty {
-  background: #eee;
-  cursor: default;
+.team:hover {
+  background: #e8f0ff;
 }
 
-.submit {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.locked .slot {
-  pointer-events: none;
+.team:disabled {
+  cursor: not-allowed;
   opacity: 0.6;
+}
+
+.champion {
+  background: #F56600;
+  color: white;
+  font-weight: bold;
+}
+
+.submission-form {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1200px) {
+  .bracket {
+    flex-direction: column;
+    align-items: center;
+  }
+  .region {
+    min-width: 80%;
+  }
 }
