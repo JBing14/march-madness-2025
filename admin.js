@@ -1,52 +1,45 @@
-const firebaseConfig = { /* Paste your config here */ };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+import { db } from "./firebase.js";
+import {
+  collection,
+  query,
+  orderBy,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-const teams = [/* Same 64 teams as in script.js */]; // Copy from script.js
+const tableBody = document.getElementById("table-body");
+const detailsEl = document.getElementById("details");
+const countEl = document.getElementById("count");
 
-const scoring = [1, 3, 5, 7, 10, 20]; // Round scores
-const bonusGames = [3, 7, 24, 28]; // Indices for 4 vs 5 (upper left, right), 3 vs 6 (lower left, right)
+async function loadSubmissions() {
+  tableBody.innerHTML = "";
+  detailsEl.textContent = "Click an entry to view picks…";
 
-let winners = {};
-let html = "<h2>Enter Game Winners</h2>";
-for (let i = 0; i < 32; i++) {
-  html += `
-    <div>
-      <label>Game ${i + 1} (${teams[i * 2]} vs ${teams[i * 2 + 1]}):</label>
-      <select onchange="updateWinner(${i}, this.value)">
-        <option value="">Select Winner</option>
-        <option value="${teams[i * 2]}">${teams[i * 2]}</option>
-        <option value="${teams[i * 2 + 1]}">${teams[i * 2 + 1]}</option>
-      </select>
-    </div>
-  `;
-}
-document.getElementById("gameResults").innerHTML = html;
+  const q = query(
+    collection(db, "brackets"),
+    orderBy("submittedAt", "desc")
+  );
 
-function updateWinner(gameIndex, winner) {
-  winners[gameIndex] = winner;
-  updateScores();
-}
+  const snapshot = await getDocs(q);
+  countEl.textContent = snapshot.size;
 
-async function updateScores() {
-  const brackets = await db.collection("brackets").get();
-  brackets.forEach(async (doc) => {
+  snapshot.forEach(doc => {
     const data = doc.data();
-    let score = 0;
-    const picks = data.bracket.rounds;
 
-    picks.forEach((round, roundIndex) => {
-      round.forEach((game, gameIndex) => {
-        const actualWinner = winners[gameIndex];
-        if (actualWinner && game.winner === actualWinner) {
-          score += scoring[roundIndex];
-          if (roundIndex === 0 && bonusGames.includes(gameIndex)) {
-            score += 5; // Bonus points
-          }
-        }
-      });
-    });
+    const tr = document.createElement("tr");
 
-    await db.collection("brackets").doc(doc.id).update({ score });
+    tr.innerHTML = `
+      <td>${data.entryName}</td>
+      <td>${data.email}</td>
+      <td>${data.tiebreaker}</td>
+      <td>${data.submittedAt?.toDate().toLocaleString() || ""}</td>
+    `;
+
+    tr.onclick = () => {
+      detailsEl.textContent = JSON.stringify(data.picks, null, 2);
+    };
+
+    tableBody.appendChild(tr);
   });
 }
+
+loadSubmissions();
