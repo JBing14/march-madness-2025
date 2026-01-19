@@ -70,21 +70,35 @@ function createSlot(region, round, name, index) {
 /* ==============================
    ADVANCEMENT LOGIC (FIXED)
 ================================ */
+function clearPathFromSlot(slotId) {
+    const slot = document.getElementById(slotId);
+    if (!slot) return;
+
+    const next = slot.dataset.next;
+
+    slot.innerHTML = 'TBD';
+    slot.classList.add('empty');
+    slot.classList.remove('selected', 'path-highlight');
+
+    if (next) {
+        clearPathFromSlot(next);
+    }
+}
 
 function advanceTeam(region, round, teamName, index) {
     const currentSlot = document.getElementById(`${region}-${round}-s${index}`);
-    if (!currentSlot || currentSlot.classList.contains("empty")) return;
+    if (!currentSlot) return;
 
-    // 1. Find sibling in matchup
+    // Find the other team in this matchup
     const siblingIndex = index % 2 === 0 ? index - 1 : index + 1;
     const siblingSlot = document.getElementById(`${region}-${round}-s${siblingIndex}`);
 
-    // 2. Clear sibling downstream path
+    // Clear sibling’s downstream path
     if (siblingSlot && siblingSlot.dataset.next) {
         clearPathFromSlot(siblingSlot.dataset.next);
     }
 
-    // 3. Advance team
+    // Advance selected team
     const nextSlotId = currentSlot.dataset.next;
     if (!nextSlotId) return;
 
@@ -92,9 +106,10 @@ function advanceTeam(region, round, teamName, index) {
     if (!nextSlot) return;
 
     nextSlot.innerHTML = currentSlot.innerHTML;
-    nextSlot.classList.remove("empty");
-    nextSlot.classList.add("selected");
+    nextSlot.classList.remove('empty');
+    nextSlot.classList.add('selected', 'path-highlight');
 }
+
 
 /* ==============================
    CLEAR DOWNSTREAM PATH
@@ -151,3 +166,4 @@ function getNextSlotId(region, round, index) {
 function submitBracket() {
     alert("Bracket submission logic will be added after logic confirmation.");
 }
+
