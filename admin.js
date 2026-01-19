@@ -14,12 +14,23 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
+/* ================= CONFIG ================= */
+
 const ADMIN_EMAIL = "jbgerloff@gmail.com";
 
-/* ================= AUTH ================= */
+const POINTS = {
+  r1: 1,
+  r2: 3,
+  r3: 5,
+  r4: 7,
+  r5: 20
+};
+
+/* ================= DOM ================= */
 
 const loginDiv = document.getElementById("login");
 const dashboardDiv = document.getElementById("dashboard");
+
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const emailInput = document.getElementById("email");
@@ -37,13 +48,26 @@ const tableBody = document.getElementById("table-body");
 const detailsEl = document.getElementById("details");
 const countEl = document.getElementById("count");
 
-const POINTS = { r1: 1, r5: 20 };
+/* ================= STATE ================= */
 
-let officialResults = { round1: {}, champion: "" };
+let officialResults = {
+  round1: {},
+  round2: {},
+  round3: {},
+  round4: {},
+  champion: ""
+};
+
+/* ================= AUTH ================= */
 
 loginBtn.onclick = async () => {
+  loginError.textContent = "";
   try {
-    await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+    await signInWithEmailAndPassword(
+      auth,
+      emailInput.value,
+      passwordInput.value
+    );
   } catch (e) {
     loginError.textContent = e.message;
   }
@@ -57,9 +81,11 @@ onAuthStateChanged(auth, async user => {
     dashboardDiv.style.display = "none";
     return;
   }
+
   loginDiv.style.display = "none";
   dashboardDiv.style.display = "block";
   adminEmailEl.textContent = user.email;
+
   await initAdmin();
 });
 
@@ -71,7 +97,7 @@ async function initAdmin() {
   await loadSubmissions();
 }
 
-/* ================= CONTROLS ================= */
+/* ================= BUILD CONTROLS ================= */
 
 async function buildRound1ControlsFromData() {
   round1Controls.innerHTML = "";
@@ -80,9 +106,10 @@ async function buildRound1ControlsFromData() {
   const snap = await getDocs(collection(db, "brackets"));
   if (snap.empty) return;
 
-  const first = snap.docs[0].data().picks.round1;
+  const firstBracket = snap.docs[0].data();
+  const round1 = firstBracket.picks.round1;
 
-  Object.entries(first).forEach(([game, data]) => {
+  Object.entries(round1).forEach(([game, data]) => {
     const select = document.createElement("select");
     select.dataset.game = game;
 
@@ -114,7 +141,7 @@ async function loadResults() {
   officialResults = snap.data();
 
   document.querySelectorAll("#round1Controls select").forEach(sel => {
-    if (officialResults.round1[sel.dataset.game]) {
+    if (officialResults.round1?.[sel.dataset.game]) {
       sel.value = officialResults.round1[sel.dataset.game];
     }
   });
@@ -124,9 +151,13 @@ async function loadResults() {
 
 saveResultsBtn.onclick = async () => {
   officialResults.round1 = {};
+
   document.querySelectorAll("#round1Controls select").forEach(sel => {
-    if (sel.value) officialResults.round1[sel.dataset.game] = sel.value;
+    if (sel.value) {
+      officialResults.round1[sel.dataset.game] = sel.value;
+    }
   });
+
   officialResults.champion = championSelect.value;
 
   await setDoc(doc(db, "results", "current"), officialResults);
@@ -138,25 +169,58 @@ saveResultsBtn.onclick = async () => {
 scoreBtn.onclick = async () => {
   scoreStatus.textContent = "Scoring...";
 
-  const brackets = await getDocs(collection(db, "brackets"));
+  const bracketsSnap = await getDocs(collection(db, "brackets"));
 
-  for (const b of brackets.docs) {
+  for (const b of bracketsSnap.docs) {
     const p = b.data().picks;
-    let score = { r1: 0, r5: 0 };
 
-    for (const game in officialResults.round1) {
+    let score = {
+      r1: 0,
+      r2: 0,
+      r3: 0,
+      r4: 0,
+      r5: 0
+    };
+
+    // Round 1
+    for (const game in officialResults.round1 || {}) {
       if (p.round1?.[game]?.pick === officialResults.round1[game]) {
         score.r1 += POINTS.r1;
       }
     }
 
+    // Round 2
+    for (const game in officialResults.round2 || {}) {
+      if (p.round2?.[game]?.pick === officialResults.round2[game]) {
+        score.r2 += POINTS.r2;
+      }
+    }
+
+    // Round 3
+    for (const game in officialResults.round3 || {}) {
+      if (p.round3?.[game]?.pick === officialResults.round3[game]) {
+        score.r3 += POINTS.r3;
+      }
+    }
+
+    // Round 4
+    for (const game in officialResults.round4 || {}) {
+      if (p.round4?.[game]?.pick === officialResults.round4[game]) {
+        score.r4 += POINTS.r4;
+      }
+    }
+
+    // Champion
     if (p.champion === officialResults.champion) {
       score.r5 = POINTS.r5;
     }
 
+    const total =
+      score.r1 + score.r2 + score.r3 + score.r4 + score.r5;
+
     await setDoc(doc(db, "scores", b.id), {
       entryName: b.data().entryName,
-      total: score.r1 + score.r5,
+      total,
       rounds: score
     });
   }
@@ -164,14 +228,18 @@ scoreBtn.onclick = async () => {
   scoreStatus.textContent = "Scoring complete.";
 };
 
-/* ================= SUBMISSIONS ================= */
+/* ================= SUBMISSIONS TABLE ================= */
 
 async function loadSubmissions() {
-  const q = query(collection(db, "brackets"), orderBy("submittedAt", "desc"));
+  const q = query(
+    collection(db, "brackets"),
+    orderBy("submittedAt", "desc")
+  );
   const snap = await getDocs(q);
-  countEl.textContent = snap.size;
 
+  countEl.textContent = snap.size;
   tableBody.innerHTML = "";
+
   snap.forEach(d => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -180,8 +248,13 @@ async function loadSubmissions() {
       <td>${d.data().tiebreaker}</td>
       <td>${d.data().submittedAt?.toDate().toLocaleString()}</td>
     `;
-    tr.onclick = () =>
-      detailsEl.textContent = JSON.stringify(d.data().picks, null, 2);
+    tr.onclick = () => {
+      detailsEl.textContent = JSON.stringify(
+        d.data().picks,
+        null,
+        2
+      );
+    };
     tableBody.appendChild(tr);
   });
 }
