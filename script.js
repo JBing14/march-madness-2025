@@ -7,7 +7,8 @@ teams.forEach(team => {
 });
 
 function handlePick(teamBtn) {
-  if (teamBtn.classList.contains("empty")) return;
+  // Only block clicks on truly empty slots
+  if (teamBtn.classList.contains("empty") && teamBtn.textContent === "") return;
 
   const region = teamBtn.dataset.region;
   const round = Number(teamBtn.dataset.round);
@@ -23,12 +24,13 @@ function handlePick(teamBtn) {
 
   if (!targetSlots.length) return;
 
-  // Clear both slots in next round matchup
+  // Clear next round matchup
   targetSlots.forEach(slot => {
     slot.textContent = "";
-    slot.classList.remove("empty");
+    slot.classList.add("empty");
   });
 
-  // Fill first available slot
+  // Fill first slot
   targetSlots[0].textContent = teamName;
+  targetSlots[0].classList.remove("empty");
 }
