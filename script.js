@@ -1,18 +1,19 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const round1El = document.getElementById("round-1-left");
-  const round2El = document.getElementById("round-2-left");
-  const round3El = document.getElementById("round-3-left");
-  const round4El = document.getElementById("round-4-left");
-  const champEl = document.getElementById("round-5-left");
+document.addEventListener("DOMContentLoaded", function () {
+
+  var round1El = document.getElementById("round-1-left");
+  var round2El = document.getElementById("round-2-left");
+  var round3El = document.getElementById("round-3-left");
+  var round4El = document.getElementById("round-4-left");
+  var champEl  = document.getElementById("round-5-left");
 
   if (!round1El || !round2El || !round3El || !round4El || !champEl) {
-    console.error("One or more round containers are missing");
+    console.error("Missing round containers");
     return;
   }
 
   // ---------------- STATE ----------------
 
-  const round1 = [
+  var round1 = [
     ["Auburn", "Alabama St"],
     ["Louisville", "Creighton"],
     ["Michigan", "UC San Diego"],
@@ -23,69 +24,65 @@ document.addEventListener("DOMContentLoaded", () => {
     ["Michigan St", "Bryant"]
   ];
 
-  const round2 = [
+  var round2 = [
     [null, null],
     [null, null],
     [null, null],
     [null, null]
   ];
 
-  const round3 = [
+  var round3 = [
     [null, null],
     [null, null]
   ];
 
-  const round4 = [
+  var round4 = [
     [null, null]
   ];
 
-  let champion = null;
+  var champion = null;
 
   // ---------------- RENDER ----------------
 
-  function render() {
-    renderRound(round1El, round1, handleRound1Pick);
-    renderRound(round2El, round2, handleRound2Pick);
-    renderRound(round3El, round3, handleRound3Pick);
-    renderRound(round4El, round4, handleRound4Pick);
-
-    renderChampion();
-  }
-
-  function renderRound(container, matchups, clickHandler) {
+  function renderRound(container, matchups, handler) {
     container.innerHTML = "";
 
-    matchups.forEach((matchup, matchupIndex) => {
-      const matchEl = document.createElement("div");
+    for (var i = 0; i < matchups.length; i++) {
+      var matchup = matchups[i];
+      var matchEl = document.createElement("div");
       matchEl.className = "matchup";
 
-      matchup.forEach((team, slotIndex) => {
-        const btn = document.createElement("button");
+      for (var j = 0; j < matchup.length; j++) {
+        var team = matchup[j];
+        var btn = document.createElement("button");
         btn.className = "team";
-        btn.textContent = team ?? "";
+        btn.textContent = team ? team : "";
 
-        if (team && clickHandler) {
-          btn.onclick = () => clickHandler(matchupIndex, slotIndex, team);
+        if (team && handler) {
+          btn.onclick = (function (mi, si, t) {
+            return function () {
+              handler(mi, si, t);
+            };
+          })(i, j, team);
         } else {
           btn.disabled = true;
         }
 
         matchEl.appendChild(btn);
-      });
+      }
 
       container.appendChild(matchEl);
-    });
+    }
   }
 
   function renderChampion() {
     champEl.innerHTML = "";
-
     if (!champion) return;
 
-    const matchEl = document.createElement("div");
+    var matchEl = document.createElement("div");
     matchEl.className = "matchup";
 
-    const btn = document.createElement("button");
+    var btn = document.createElement("button");
     btn.className = "team champion";
     btn.textContent = champion;
     btn.disabled = true;
@@ -94,14 +91,28 @@ document.addEventListener("DOMContentLoaded", () => {
     champEl.appendChild(matchEl);
   }
 
+  function render() {
+    renderRound(round1El, round1, handleRound1Pick);
+    renderRound(round2El, round2, handleRound2Pick);
+    renderRound(round3El, round3, handleRound3Pick);
+    renderRound(round4El, round4, handleRound4Pick);
+    renderChampion();
+  }
+
   // ---------------- LOGIC ----------------
 
+  function clearRound(r) {
+    for (var i = 0; i < r.length; i++) {
+      r[i][0] = null;
+      r[i][1] = null;
+    }
+  }
+
   function handleRound1Pick(matchupIndex, slotIndex, team) {
-    const r2Matchup = Math.floor(matchupIndex / 2);
-    const r2Slot = matchupIndex % 2;
+    var r2Matchup = Math.floor(matchupIndex / 2);
+    var r2Slot = matchupIndex % 2;
 
     round2[r2Matchup][r2Slot] = team;
-
     clearRound(round3);
     clearRound(round4);
     champion = null;
@@ -110,11 +121,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function handleRound2Pick(matchupIndex, slotIndex, team) {
-    const r3Matchup = Math.floor(matchupIndex / 2);
-    const r3Slot = matchupIndex % 2;
+    var r3Matchup = Math.floor(matchupIndex / 2);
+    var r3Slot = matchupIndex % 2;
 
     round3[r3Matchup][r3Slot] = team;
-
     clearRound(round4);
     champion = null;
 
@@ -132,14 +142,9 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   }
 
-  function clearRound(round) {
-    round.forEach(matchup => {
-      matchup[0] = null;
-      matchup[1] = null;
-    });
-  }
-
   // ---------------- INIT ----------------
 
   render();
+
 });
+
