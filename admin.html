@@ -11,6 +11,15 @@
       padding: 20px;
     }
 
+    #login, #dashboard {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    #dashboard {
+      display: none;
+    }
+
     table {
       border-collapse: collapse;
       width: 100%;
@@ -20,7 +29,6 @@
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
-      text-align: left;
     }
 
     th {
@@ -35,8 +43,19 @@
     pre {
       background: #f4f4f4;
       padding: 10px;
-      overflow-x: auto;
       margin-top: 20px;
+      overflow-x: auto;
+    }
+
+    input {
+      display: block;
+      margin-bottom: 10px;
+      padding: 8px;
+      width: 100%;
+    }
+
+    button {
+      padding: 8px 16px;
     }
   </style>
 </head>
@@ -45,22 +64,37 @@
 
 <h1>Admin Dashboard</h1>
 
-<p><strong>Total Submissions:</strong> <span id="count">0</span></p>
+<div id="login">
+  <h2>Admin Login</h2>
+  <input type="email" id="email" placeholder="Admin Email" />
+  <input type="password" id="password" placeholder="Password" />
+  <button id="loginBtn">Login</button>
+  <p id="loginError" style="color:red;"></p>
+</div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Entry Name</th>
-      <th>Email</th>
-      <th>Tiebreaker</th>
-      <th>Submitted At</th>
-    </tr>
-  </thead>
-  <tbody id="table-body"></tbody>
-</table>
+<div id="dashboard">
+  <p>
+    Logged in as <strong id="adminEmail"></strong>
+    <button id="logoutBtn">Logout</button>
+  </p>
 
-<h2>Selected Bracket (Raw)</h2>
-<pre id="details">Click an entry to view picks…</pre>
+  <p><strong>Total Submissions:</strong> <span id="count">0</span></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Entry Name</th>
+        <th>Email</th>
+        <th>Tiebreaker</th>
+        <th>Submitted At</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+
+  <h3>Selected Bracket</h3>
+  <pre id="details">Click an entry to view picks…</pre>
+</div>
 
 <script type="module" src="admin.js"></script>
 </body>
