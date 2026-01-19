@@ -1,5 +1,19 @@
 import { db } from "./firebase.js";
-
+const tournament = {
+  regions: {
+    east: [
+      ["1 Auburn", "16 Alabama St"],
+      ["8 Louisville", "9 Creighton"],
+      ["5 Michigan", "12 UC San Diego"],
+      ["4 Texas A&M", "13 Yale"],
+      ["6 Ole Miss", "11 San Diego St"],
+      ["3 Iowa St", "14 Lipscomb"],
+      ["7 Marquette", "10 New Mexico"],
+      ["2 Michigan St", "15 Bryant"]
+    ]
+  },
+  rounds: 4
+};
 const teams = document.querySelectorAll(".team");
 
 teams.forEach(team => {
@@ -51,5 +65,6 @@ function handlePick(teamBtn) {
   targetSlots[0].textContent = teamName;
   targetSlots[0].classList.remove("empty");
 }
+
 
 
