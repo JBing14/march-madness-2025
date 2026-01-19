@@ -1,20 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <link rel="icon" href="./favicon.ico">
-  <meta charset="UTF-8" />
-  <title>March Madness Bracket</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-
 <body>
   <h1 class="title">March Madness Bracket</h1>
 
-  <!-- Bracket renders here -->
+  <div class="submission-form">
+    <input type="text" id="name" placeholder="Your Name" />
+    <input type="email" id="email" placeholder="Your Email" />
+    <input type="number" id="tiebreaker" placeholder="Championship Total Score" />
+    <button id="submitBracket">Submit Bracket</button>
+  </div>
+
   <div class="bracket" id="bracket"></div>
 
   <script type="module" src="./firebase.js"></script>
   <script type="module" src="./script.js"></script>
 </body>
-</html>
 
