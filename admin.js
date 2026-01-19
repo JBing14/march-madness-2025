@@ -7,7 +7,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
 /* ===== CONFIG ===== */
-const ADMIN_EMAIL = "your_admin_email@example.com";
+const ADMIN_EMAIL = "jbgerloff@gmail.com";
 
 /* ===== DOM ===== */
 const loginDiv = document.getElementById("login");
@@ -188,3 +188,4 @@ async function loadSubmissions() {
     tableBody.appendChild(tr);
   });
 }
+
