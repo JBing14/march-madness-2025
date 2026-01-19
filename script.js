@@ -1,3 +1,13 @@
+import { db } from "./firebase.js";
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
 document.addEventListener("DOMContentLoaded", function () {
 
   var round1El = document.getElementById("round-1-left");
@@ -194,4 +204,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
   render();
 };
+
 
