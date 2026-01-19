@@ -112,6 +112,8 @@ async function getEntryNumber(name, email) {
 ================================ */
 
 function renderBracket() {
+  bracketEl.innerHTML = "";
+
   Object.entries(tournament.regions).forEach(([regionName, games]) => {
     const regionEl = document.createElement("div");
     regionEl.className = "region";
@@ -123,26 +125,24 @@ function renderBracket() {
       const roundEl = document.createElement("div");
       roundEl.className = `round round-${round}`;
 
-      const matchupCount =
-        round === 1
-          ? games.length
-          : Math.ceil(games.length / Math.pow(2, round - 1));
+      // CORRECT matchup count (halves every round)
+      const matchupCount = games.length / Math.pow(2, round - 1);
 
       for (let game = 1; game <= matchupCount; game++) {
         const matchupEl = document.createElement("div");
         matchupEl.className = "matchup";
 
-        const slots = 2;
-
-        for (let s = 0; s < slots; s++) {
+        // EVERY matchup always has 2 slots
+        for (let slot = 0; slot < 2; slot++) {
           const btn = document.createElement("button");
           btn.className = "team empty";
           btn.dataset.region = regionName;
           btn.dataset.round = round;
           btn.dataset.game = game;
 
+          // Only Round 1 gets preset teams
           if (round === 1) {
-            btn.textContent = games[game - 1][s];
+            btn.textContent = games[(game - 1)][slot];
             btn.classList.remove("empty");
           }
 
@@ -159,7 +159,6 @@ function renderBracket() {
     bracketEl.appendChild(regionEl);
   });
 }
-
 /* ==============================
    SUBMISSION HANDLER
 ================================ */
@@ -214,4 +213,5 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("submitBracket")
     .addEventListener("click", submitBracket);
 });
+
 
