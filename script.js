@@ -2,66 +2,61 @@ document.addEventListener("DOMContentLoaded", () => {
   const bracketEl = document.getElementById("bracket");
   bracketEl.innerHTML = "";
 
-  // ----- DATA -----
-  const round1 = [
-    ["Auburn", "Alabama St"],
-    ["Louisville", "Creighton"],
-    ["Michigan", "UC San Diego"],
-    ["Texas A&M", "Yale"],
-    ["Ole Miss", "San Diego St"],
-    ["Iowa St", "Lipscomb"],
-    ["Marquette", "New Mexico"],
-    ["Michigan St", "Bryant"]
+  const rounds = [
+    [
+      ["Auburn", "Alabama St"],
+      ["Louisville", "Creighton"],
+      ["Michigan", "UC San Diego"],
+      ["Texas A&M", "Yale"],
+      ["Ole Miss", "San Diego St"],
+      ["Iowa St", "Lipscomb"],
+      ["Marquette", "New Mexico"],
+      ["Michigan St", "Bryant"]
+    ],
+    Array(4).fill([null, null]),
+    Array(2).fill([null, null]),
+    Array(1).fill([null, null]),
+    Array(1).fill([null])
   ];
 
-  const rounds = [round1, [], [], [], []]; // R1 → Champion
-
-  // ----- RENDER -----
   function render() {
     bracketEl.innerHTML = "";
 
     rounds.forEach((round, roundIndex) => {
-      if (round.length === 0) return;
-
       const roundEl = document.createElement("div");
-      roundEl.className = "round";
+      roundEl.className = `round round-${roundIndex + 1}`;
 
       round.forEach((matchup, matchupIndex) => {
-        if (!matchup || matchup.length < 2) return;
-
         const matchupEl = document.createElement("div");
         matchupEl.className = "matchup";
 
-        matchup.forEach(team => {
+        matchup.forEach((team, slotIndex) => {
           const btn = document.createElement("button");
           btn.className = "team";
-          btn.textContent = team;
+          btn.textContent = team ?? "";
 
-          btn.onclick = () => {
-            // Select winner in this matchup
-            matchupEl.querySelectorAll(".team").forEach(b =>
-              b.classList.remove("selected")
-            );
-            btn.classList.add("selected");
+          if (team) {
+            btn.onclick = () => {
+              const nextRound = rounds[roundIndex + 1];
+              if (!nextRound) return;
 
-            // Advance winner
-            const nextRoundIndex = roundIndex + 1;
-            const nextMatchupIndex = Math.floor(matchupIndex / 2);
-            const slotIndex = matchupIndex % 2;
+              const nextMatchupIndex = Math.floor(matchupIndex / 2);
+              const nextSlotIndex = matchupIndex % 2;
 
-            if (!rounds[nextRoundIndex][nextMatchupIndex]) {
-              rounds[nextRoundIndex][nextMatchupIndex] = [];
-            }
+              nextRound[nextMatchupIndex][nextSlotIndex] = team;
 
-            rounds[nextRoundIndex][nextMatchupIndex][slotIndex] = team;
+              // clear everything beyond
+              for (let i = roundIndex + 2; i < rounds.length; i++) {
+                rounds[i] = rounds[i].map(m =>
+                  m.map(() => null)
+                );
+              }
 
-            // Clear deeper rounds
-            for (let i = nextRoundIndex + 1; i < rounds.length; i++) {
-              rounds[i] = [];
-            }
-
-            render();
-          };
+              render();
+            };
+          } else {
+            btn.disabled = true;
+          }
 
           matchupEl.appendChild(btn);
         });
@@ -75,3 +70,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   render();
 });
+
