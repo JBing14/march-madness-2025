@@ -9,32 +9,23 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-/* =========================
-   FIREBASE INIT
-========================= */
+/* ===== FIREBASE INIT ===== */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB27qEP0k2PR8Zz_z_A8KjGcXvxX9OROQA",
-  authDomain: "marchmadness2025-24f04.firebaseapp.com",
-  projectId: "marchmadness2025-24f04",
-  storageBucket: "marchmadness2025-24f04.firebasestorage.app",
-  messagingSenderId: "916205408985",
-  appId: "1:916205408985:web:1dd57fc8704c6c0e8fe4c8",
-  measurementId: "G-TKTZB2FFRB"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* =========================
-   DOM READY
-========================= */
+/* ===== DOM READY ===== */
 
-document.addEventListener("DOMContentLoaded", function () {
-
-  /* =========================
-     ELEMENTS
-  ========================= */
+document.addEventListener("DOMContentLoaded", () => {
 
   const round1El = document.getElementById("round-1-left");
   const round2El = document.getElementById("round-2-left");
@@ -42,16 +33,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const round4El = document.getElementById("round-4-left");
   const champEl  = document.getElementById("round-5-left");
 
-  if (!round1El || !round2El || !round3El || !round4El || !champEl) {
-    console.error("Missing round containers");
-    return;
-  }
-
   let isLocked = false;
 
-  /* =========================
-     STATE
-  ========================= */
+  /* ===== STATE ===== */
 
   const round1 = [
     ["Auburn", "Alabama St"],
@@ -70,47 +54,50 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let champion = null;
 
-  /* =========================
-     RENDERING
-  ========================= */
+  // 🔑 ACTUAL USER PICKS
+  const userPicks = {
+    round1: {},
+    round2: {},
+    round3: {},
+    round4: {}
+  };
+
+  /* ===== RENDER ===== */
 
   function renderRound(container, matchups, handler) {
     const header = container.querySelector("strong");
     container.innerHTML = "";
     if (header) container.appendChild(header);
 
-    matchups.forEach((matchup, matchupIndex) => {
-      const matchEl = document.createElement("div");
-      matchEl.className = "matchup";
+    matchups.forEach((matchup, mi) => {
+      const div = document.createElement("div");
+      div.className = "matchup";
 
-      matchup.forEach((team, slotIndex) => {
+      matchup.forEach(team => {
         const btn = document.createElement("button");
         btn.className = "team";
         btn.textContent = team || "";
+        btn.disabled = !team || isLocked;
 
         if (team && handler && !isLocked) {
-          btn.onclick = () => handler(matchupIndex, slotIndex, team);
-        } else {
-          btn.disabled = true;
+          btn.onclick = () => handler(mi, team);
         }
 
-        matchEl.appendChild(btn);
+        div.appendChild(btn);
       });
 
-      container.appendChild(matchEl);
+      container.appendChild(div);
     });
   }
 
   function renderChampion() {
     champEl.innerHTML = "<strong>Champion</strong>";
-
     if (!champion) return;
 
     const btn = document.createElement("button");
     btn.className = "team champion";
     btn.textContent = champion;
     btn.disabled = true;
-
     champEl.appendChild(btn);
   }
 
@@ -122,133 +109,96 @@ document.addEventListener("DOMContentLoaded", function () {
     renderChampion();
   }
 
-  /* =========================
-     LOGIC
-  ========================= */
+  /* ===== LOGIC ===== */
 
   function clearRound(round) {
-    round.forEach(matchup => {
-      matchup[0] = null;
-      matchup[1] = null;
-    });
+    round.forEach(m => { m[0] = null; m[1] = null; });
   }
 
-  function handleRound1Pick(matchupIndex, slotIndex, team) {
+  function handleRound1Pick(i, team) {
     if (isLocked) return;
-
-    round2[Math.floor(matchupIndex / 2)][matchupIndex % 2] = team;
-    clearRound(round3);
-    clearRound(round4);
-    champion = null;
-
+    userPicks.round1[`game${i + 1}`] = team;
+    round2[Math.floor(i / 2)][i % 2] = team;
+    clearRound(round3); clearRound(round4); champion = null;
     render();
   }
 
-  function handleRound2Pick(matchupIndex, slotIndex, team) {
+  function handleRound2Pick(i, team) {
     if (isLocked) return;
-
-    round3[Math.floor(matchupIndex / 2)][matchupIndex % 2] = team;
-    clearRound(round4);
-    champion = null;
-
+    userPicks.round2[`game${i + 1}`] = team;
+    round3[Math.floor(i / 2)][i % 2] = team;
+    clearRound(round4); champion = null;
     render();
   }
 
-  function handleRound3Pick(matchupIndex, slotIndex, team) {
+  function handleRound3Pick(i, team) {
     if (isLocked) return;
-
-    round4[0][matchupIndex] = team;
+    userPicks.round3[`game${i + 1}`] = team;
+    round4[0][i] = team;
     champion = null;
-
     render();
   }
 
-  function handleRound4Pick(matchupIndex, slotIndex, team) {
+  function handleRound4Pick(_, team) {
     if (isLocked) return;
-
+    userPicks.round4.game1 = team;
     champion = team;
     render();
   }
 
-  /* =========================
-     FIRESTORE SAFE SERIALIZE
-  ========================= */
+  /* ===== SERIALIZE ===== */
 
-  function serializeRound(round) {
-    const obj = {};
-    for (let i = 0; i < round.length; i++) {
-      obj[`game${i + 1}`] = {
-        slot1: round[i][0] || null,
-        slot2: round[i][1] || null
+  function serializeRound(round, picks) {
+    const out = {};
+    round.forEach((m, i) => {
+      const key = `game${i + 1}`;
+      out[key] = {
+        slot1: m[0],
+        slot2: m[1],
+        pick: picks[key] || null
       };
-    }
-    return obj;
+    });
+    return out;
   }
 
-  /* =========================
-     SUBMIT (GLOBAL)
-  ========================= */
+  /* ===== SUBMIT ===== */
 
-  window.submitBracket = async function () {
+  window.submitBracket = async () => {
     if (isLocked) return;
 
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
     const tiebreaker = document.getElementById("tiebreaker").value.trim();
 
-    if (!name || !email || !tiebreaker) {
-      alert("Please enter name, email, and tiebreaker.");
-      return;
-    }
-
-    if (!champion) {
-      alert("Please complete the entire bracket.");
+    if (!name || !email || !tiebreaker || !champion) {
+      alert("Complete bracket and fill out all fields.");
       return;
     }
 
     isLocked = true;
 
-    try {
-      const q = query(
-        collection(db, "brackets"),
-        where("email", "==", email)
-      );
+    const q = query(collection(db, "brackets"), where("email", "==", email));
+    const snap = await getDocs(q);
+    const entryNumber = snap.size + 1;
 
-      const snapshot = await getDocs(q);
-      const entryNumber = snapshot.size + 1;
+    await addDoc(collection(db, "brackets"), {
+      name,
+      email,
+      entryName: `${name} ${entryNumber}`,
+      tiebreaker: Number(tiebreaker),
+      submittedAt: serverTimestamp(),
+      picks: {
+        round1: serializeRound(round1, userPicks.round1),
+        round2: serializeRound(round2, userPicks.round2),
+        round3: serializeRound(round3, userPicks.round3),
+        round4: serializeRound(round4, userPicks.round4),
+        champion
+      }
+    });
 
-      const submission = {
-        name,
-        email,
-        entryName: `${name} ${entryNumber}`,
-        tiebreaker: Number(tiebreaker),
-        submittedAt: serverTimestamp(),
-        picks: {
-          round1: serializeRound(round1),
-          round2: serializeRound(round2),
-          round3: serializeRound(round3),
-          round4: serializeRound(round4),
-          champion
-        }
-      };
-
-      await addDoc(collection(db, "brackets"), submission);
-
-      alert("Bracket submitted successfully!");
-      render();
-
-    } catch (err) {
-      console.error("FIREBASE ERROR:", err);
-      alert("Submission failed. Check console.");
-      isLocked = false;
-    }
+    alert("Bracket submitted!");
+    render();
   };
 
-  /* =========================
-     INIT
-  ========================= */
-
   render();
-
 });
-
