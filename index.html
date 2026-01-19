@@ -1,16 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>March Madness - Bracket Submission</title>
+
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Holtwood+One+SC|Kaushan+Script|Abel|Roboto+Condensed:700" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
 <body>
-  <h1 class="title">March Madness Bracket</h1>
+<header class="hero">
+    <div class="hero-wrap">
+        <p class="intro">Interactive</p>
+        <h1>March Madness</h1>
+        <p class="year"><i class="fa fa-star"></i> Bracket Challenge <i class="fa fa-star"></i></p>
+    </div>
+</header>
 
-  <div class="submission-form">
-    <input type="text" id="name" placeholder="Your Name" />
-    <input type="email" id="email" placeholder="Your Email" />
-    <input type="number" id="tiebreaker" placeholder="Championship Total Score" />
-    <button id="submitBracket">Submit Bracket</button>
-  </div>
+<nav>
+    <a href="leaderboard.html">Leaderboard</a> |
+    <a href="admin.html" class="subtle">Admin</a>
+</nav>
 
-  <div class="bracket" id="bracket"></div>
+<section id="user-form">
+    <input type="text" id="name" placeholder="Your Name" required>
+    <input type="email" id="email" placeholder="Your Email" required>
+    <input type="number" id="tiebreaker" placeholder="Championship Tiebreaker Score" required>
+    <button onclick="submitBracket()">Submit Bracket</button>
+    <p id="error" class="error"></p>
+</section>
 
-  <script type="module" src="./firebase.js"></script>
-  <script type="module" src="./script.js"></script>
-</body>
+<section id="bracket">
+    <div class="bracket-wrapper">
 
+        <div class="round round-1 left" id="round-1-left"><h3>1st ROUND</h3></div>
+        <div class="round round-2 left" id="round-2-left"><h3>2nd ROUND</h3></div>
+        <div class="round round-3 left" id="round-3-left"><h3>SWEET 16</h3></div>
+        <div class="round round-4 left" id="round-4-left"><h3>ELITE EIGHT</h3></div>
+        <div class="round round-5 left" id="round-5-left"><h3>FINAL FOUR</h3></div>
+        <div class="round round-6 left" id="round-6-left"><h3>CHAMPIONSHIP</h3></div>
+
+        <div class="round round-7 center" id="champion"><h3>CHAMPION</h3></div>
+
+        <div class="round round-6 right" id="round-6-right"><h3>CHAMPIONSHIP</h3></div>
+        <div class="round round-5 right" id="round-5-right"><h3>FINAL FOUR</h3></div>
+        <div class="round round-4 right" id="round-4-right"><h3>ELITE EIGHT</h3></div>
+        <div class="round round-3 right" id="round-3-right"><h3>SWEET 16</h3></div>
+        <div class="round round-2 right" id="round-2-right"><h3>2nd ROUND</h3></div>
+        <div class="round round-1 right" id="round-1-right"><h3>1st ROUND</h3></div>
+
+    </div>
+</section>
+
+<!-- Firebase (compat, matches your original setup) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER
