@@ -3,70 +3,262 @@
 <head>
   <meta charset="UTF-8" />
   <title>March Madness Bracket</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-
-    .bracket {
-      display: flex;
-      gap: 20px;
-    }
-
-    .round {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .matchup {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .team {
-      padding: 6px;
-      cursor: pointer;
-    }
-
-    .team:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    .champion {
-      font-weight: bold;
-      background: #dff0d8;
-    }
-
-    .form {
-      margin-top: 20px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-<h1>March Madness Bracket</h1>
+<h1 class="title">March Madness Bracket</h1>
 
-<div class="bracket">
-  <div class="round" id="round1"><strong>Round 1</strong></div>
-  <div class="round" id="round2"><strong>Round 2</strong></div>
-  <div class="round" id="round3"><strong>Round 3</strong></div>
-  <div class="round" id="round4"><strong>Final</strong></div>
-  <div class="round" id="champion"><strong>Champion</strong></div>
+<div class="bracket-grid">
+
+  <!-- LEFT SIDE -->
+  <div class="bracket-column">
+
+    <!-- EAST REGION -->
+    <div class="region">
+      <h2>East</h2>
+
+      <!-- ROUND 1 -->
+      <div class="round round-1">
+        <button class="team" data-region="east" data-round="1" data-game="1">Auburn</button>
+        <button class="team" data-region="east" data-round="1" data-game="1">Alabama St</button>
+
+        <button class="team" data-region="east" data-round="1" data-game="2">Louisville</button>
+        <button class="team" data-region="east" data-round="1" data-game="2">Creighton</button>
+
+        <button class="team" data-region="east" data-round="1" data-game="3">Michigan</button>
+        <button class="team" data-region="east" data-round="1" data-game="3">UC San Diego</button>
+
+        <button class="team" data-region="east" data-round="1" data-game="4">Texas A&M</button>
+        <button class="team" data-region="east" data-round="1" data-game="4">Yale</button>
+
+        <button class="team" data-region="east" data-round="1" data-game="5">Ole Miss</button>
+        <button class="team" data-region="east" data-round="1" data-game="5">San Diego St</button>
+
+        <button class="team" data-region="east" data-round="1" data-game="6">Iowa St</button>
+        <button class="team" data-region="east" data-round="1" data-game="6">Lipscomb</button>
+
+        <button class="team" data-region="east" data-round="1" data-game="7">Marquette</button>
+        <button class="team" data-region="east" data-round="1" data-game="7">New Mexico</button>
+
+        <button class="team" data-region="east" data-round="1" data-game="8">Michigan St</button>
+        <button class="team" data-region="east" data-round="1" data-game="8">Bryant</button>
+      </div>
+
+      <!-- ROUND 2 -->
+      <div class="round round-2">
+        <button class="team empty" data-region="east" data-round="2" data-game="1"></button>
+        <button class="team empty" data-region="east" data-round="2" data-game="1"></button>
+
+        <button class="team empty" data-region="east" data-round="2" data-game="2"></button>
+        <button class="team empty" data-region="east" data-round="2" data-game="2"></button>
+
+        <button class="team empty" data-region="east" data-round="2" data-game="3"></button>
+        <button class="team empty" data-region="east" data-round="2" data-game="3"></button>
+
+        <button class="team empty" data-region="east" data-round="2" data-game="4"></button>
+        <button class="team empty" data-region="east" data-round="2" data-game="4"></button>
+      </div>
+
+      <!-- ROUND 3 -->
+      <div class="round round-3">
+        <button class="team empty" data-region="east" data-round="3" data-game="1"></button>
+        <button class="team empty" data-region="east" data-round="3" data-game="1"></button>
+
+        <button class="team empty" data-region="east" data-round="3" data-game="2"></button>
+        <button class="team empty" data-region="east" data-round="3" data-game="2"></button>
+      </div>
+
+      <!-- ROUND 4 -->
+      <div class="round round-4">
+        <button class="team empty" data-region="east" data-round="4" data-game="1"></button>
+        <button class="team empty" data-region="east" data-round="4" data-game="1"></button>
+      </div>
+    </div>
+
+    <!-- SOUTH REGION -->
+    <div class="region">
+      <h2>South</h2>
+
+      <!-- ROUND 1 -->
+      <div class="round round-1">
+        <button class="team" data-region="south" data-round="1" data-game="1">Houston</button>
+        <button class="team" data-region="south" data-round="1" data-game="1">Longwood</button>
+
+        <button class="team" data-region="south" data-round="1" data-game="2">Nebraska</button>
+        <button class="team" data-region="south" data-round="1" data-game="2">Texas A&M CC</button>
+
+        <button class="team" data-region="south" data-round="1" data-game="3">Wisconsin</button>
+        <button class="team" data-region="south" data-round="1" data-game="3">James Madison</button>
+
+        <button class="team" data-region="south" data-round="1" data-game="4">Duke</button>
+        <button class="team" data-region="south" data-round="1" data-game="4">Vermont</button>
+
+        <button class="team" data-region="south" data-round="1" data-game="5">Texas Tech</button>
+        <button class="team" data-region="south" data-round="1" data-game="5">NC State</button>
+
+        <button class="team" data-region="south" data-round="1" data-game="6">Kentucky</button>
+        <button class="team" data-region="south" data-round="1" data-game="6">Oakland</button>
+
+        <button class="team" data-region="south" data-round="1" data-game="7">Florida</button>
+        <button class="team" data-region="south" data-round="1" data-game="7">Colorado</button>
+
+        <button class="team" data-region="south" data-round="1" data-game="8">Marquette</button>
+        <button class="team" data-region="south" data-round="1" data-game="8">Western KY</button>
+      </div>
+
+      <!-- ROUNDS 2–4 -->
+      <div class="round round-2">
+        <button class="team empty" data-region="south" data-round="2" data-game="1"></button>
+        <button class="team empty" data-region="south" data-round="2" data-game="1"></button>
+        <button class="team empty" data-region="south" data-round="2" data-game="2"></button>
+        <button class="team empty" data-region="south" data-round="2" data-game="2"></button>
+        <button class="team empty" data-region="south" data-round="2" data-game="3"></button>
+        <button class="team empty" data-region="south" data-round="2" data-game="3"></button>
+        <button class="team empty" data-region="south" data-round="2" data-game="4"></button>
+        <button class="team empty" data-region="south" data-round="2" data-game="4"></button>
+      </div>
+
+      <div class="round round-3">
+        <button class="team empty" data-region="south" data-round="3" data-game="1"></button>
+        <button class="team empty" data-region="south" data-round="3" data-game="1"></button>
+        <button class="team empty" data-region="south" data-round="3" data-game="2"></button>
+        <button class="team empty" data-region="south" data-round="3" data-game="2"></button>
+      </div>
+
+      <div class="round round-4">
+        <button class="team empty" data-region="south" data-round="4" data-game="1"></button>
+        <button class="team empty" data-region="south" data-round="4" data-game="1"></button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT SIDE -->
+  <div class="bracket-column">
+
+    <!-- WEST REGION -->
+    <div class="region">
+      <h2>West</h2>
+
+      <!-- ROUND 1 -->
+      <div class="round round-1">
+        <button class="team" data-region="west" data-round="1" data-game="1">UConn</button>
+        <button class="team" data-region="west" data-round="1" data-game="1">Stetson</button>
+
+        <button class="team" data-region="west" data-round="1" data-game="2">Florida Atlantic</button>
+        <button class="team" data-region="west" data-round="1" data-game="2">Northwestern</button>
+
+        <button class="team" data-region="west" data-round="1" data-game="3">San Diego St</button>
+        <button class="team" data-region="west" data-round="1" data-game="3">UAB</button>
+
+        <button class="team" data-region="west" data-round="1" data-game="4">Auburn</button>
+        <button class="team" data-region="west" data-round="1" data-game="4">Yale</button>
+
+        <button class="team" data-region="west" data-round="1" data-game="5">BYU</button>
+        <button class="team" data-region="west" data-round="1" data-game="5">Duquesne</button>
+
+        <button class="team" data-region="west" data-round="1" data-game="6">Illinois</button>
+        <button class="team" data-region="west" data-round="1" data-game="6">Morehead St</button>
+
+        <button class="team" data-region="west" data-round="1" data-game="7">Washington St</button>
+        <button class="team" data-region="west" data-round="1" data-game="7">Drake</button>
+
+        <button class="team" data-region="west" data-round="1" data-game="8">Iowa St</button>
+        <button class="team" data-region="west" data-round="1" data-game="8">South Dakota St</button>
+      </div>
+
+      <!-- ROUNDS 2–4 -->
+      <div class="round round-2">
+        <button class="team empty" data-region="west" data-round="2" data-game="1"></button>
+        <button class="team empty" data-region="west" data-round="2" data-game="1"></button>
+        <button class="team empty" data-region="west" data-round="2" data-game="2"></button>
+        <button class="team empty" data-region="west" data-round="2" data-game="2"></button>
+        <button class="team empty" data-region="west" data-round="2" data-game="3"></button>
+        <button class="team empty" data-region="west" data-round="2" data-game="3"></button>
+        <button class="team empty" data-region="west" data-round="2" data-game="4"></button>
+        <button class="team empty" data-region="west" data-round="2" data-game="4"></button>
+      </div>
+
+      <div class="round round-3">
+        <button class="team empty" data-region="west" data-round="3" data-game="1"></button>
+        <button class="team empty" data-region="west" data-round="3" data-game="1"></button>
+        <button class="team empty" data-region="west" data-round="3" data-game="2"></button>
+        <button class="team empty" data-region="west" data-round="3" data-game="2"></button>
+      </div>
+
+      <div class="round round-4">
+        <button class="team empty" data-region="west" data-round="4" data-game="1"></button>
+        <button class="team empty" data-region="west" data-round="4" data-game="1"></button>
+      </div>
+    </div>
+
+    <!-- MIDWEST REGION -->
+    <div class="region">
+      <h2>Midwest</h2>
+
+      <!-- ROUND 1 -->
+      <div class="round round-1">
+        <button class="team" data-region="midwest" data-round="1" data-game="1">Purdue</button>
+        <button class="team" data-region="midwest" data-round="1" data-game="1">Grambling</button>
+
+        <button class="team" data-region="midwest" data-round="1" data-game="2">Utah St</button>
+        <button class="team" data-region="midwest" data-round="1" data-game="2">TCU</button>
+
+        <button class="team" data-region="midwest" data-round="1" data-game="3">Gonzaga</button>
+        <button class="team" data-region="midwest" data-round="1" data-game="3">McNeese</button>
+
+        <button class="team" data-region="midwest" data-round="1" data-game="4">Kansas</button>
+        <button class="team" data-region="midwest" data-round="1" data-game="4">Samford</button>
+
+        <button class="team" data-region="midwest" data-round="1" data-game="5">South Carolina</button>
+        <button class="team" data-region="midwest" data-round="1" data-game="5">Oregon</button>
+
+        <button class="team" data-region="midwest" data-round="1" data-game="6">Creighton</button>
+        <button class="team" data-region="midwest" data-round="1" data-game="6">Akron</button>
+
+        <button class="team" data-region="midwest" data-round="1" data-game="7">Texas</button>
+        <button class="team" data-region="midwest" data-round="1" data-game="7">Colorado St</button>
+
+        <button class="team" data-region="midwest" data-round="1" data-game="8">Tennessee</button>
+        <button class="team" data-region="midwest" data-round="1" data-game="8">Saint Peter's</button>
+      </div>
+
+      <!-- ROUNDS 2–4 -->
+      <div class="round round-2">
+        <button class="team empty" data-region="midwest" data-round="2" data-game="1"></button>
+        <button class="team empty" data-region="midwest" data-round="2" data-game="1"></button>
+        <button class="team empty" data-region="midwest" data-round="2" data-game="2"></button>
+        <button class="team empty" data-region="midwest" data-round="2" data-game="2"></button>
+        <button class="team empty" data-region="midwest" data-round="2" data-game="3"></button>
+        <button class="team empty" data-region="midwest" data-round="2" data-game="3"></button>
+        <button class="team empty" data-region="midwest" data-round="2" data-game="4"></button>
+        <button class="team empty" data-region="midwest" data-round="2" data-game="4"></button>
+      </div>
+
+      <div class="round round-3">
+        <button class="team empty" data-region="midwest" data-round="3" data-game="1"></button>
+        <button class="team empty" data-region="midwest" data-round="3" data-game="1"></button>
+        <button class="team empty" data-region="midwest" data-round="3" data-game="2"></button>
+        <button class="team empty" data-region="midwest" data-round="3" data-game="2"></button>
+      </div>
+
+      <div class="round round-4">
+        <button class="team empty" data-region="midwest" data-round="4" data-game="1"></button>
+        <button class="team empty" data-region="midwest" data-round="4" data-game="1"></button>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
-<div class="form">
+<!-- SUBMIT -->
+<div class="submit">
   <input id="name" placeholder="Name" />
   <input id="email" placeholder="Email" />
-  <input id="tiebreaker" placeholder="Championship Total Score" type="number" />
-  <br /><br />
-  <button id="submitBtn">Submit Bracket</button>
+  <input id="tiebreaker" placeholder="Final score tiebreaker" />
+  <button id="submitBracket">Submit Bracket</button>
 </div>
 
 <script type="module" src="script.js"></script>
