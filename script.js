@@ -1,7 +1,13 @@
+// =====================================================
+// FIREBASE
+// =====================================================
 const db = firebase.firestore();
 
 let locked = false;
 
+// =====================================================
+// REGION DATA (SOURCE OF TRUTH)
+// =====================================================
 const regions = [
   {
     name: 'South',
@@ -15,8 +21,8 @@ const regions = [
       ['7 Marquette', '10 New Mexico'],
       ['2 Michigan St', '15 Bryant']
     ],
-    round2: Array(4).fill(['', '']),
-    round3: Array(2).fill(['', '']),
+    round2: Array.from({ length: 4 }, () => ['', '']),
+    round3: Array.from({ length: 2 }, () => ['', '']),
     round4: ['', ''],
     elite8: ''
   },
@@ -32,8 +38,8 @@ const regions = [
       ['7 UCLA', '10 Utah St'],
       ['2 Tennessee', '15 Wofford']
     ],
-    round2: Array(4).fill(['', '']),
-    round3: Array(2).fill(['', '']),
+    round2: Array.from({ length: 4 }, () => ['', '']),
+    round3: Array.from({ length: 2 }, () => ['', '']),
     round4: ['', ''],
     elite8: ''
   },
@@ -49,8 +55,8 @@ const regions = [
       ['7 Saint Marys', '10 Vanderbilt'],
       ['2 Alabama', '15 Robert Morris']
     ],
-    round2: Array(4).fill(['', '']),
-    round3: Array(2).fill(['', '']),
+    round2: Array.from({ length: 4 }, () => ['', '']),
+    round3: Array.from({ length: 2 }, () => ['', '']),
     round4: ['', ''],
     elite8: ''
   },
@@ -66,13 +72,16 @@ const regions = [
       ['7 Kansas', '10 Arkansas'],
       ['2 St Johns', '15 Omaha']
     ],
-    round2: Array(4).fill(['', '']),
-    round3: Array(2).fill(['', '']),
+    round2: Array.from({ length: 4 }, () => ['', '']),
+    round3: Array.from({ length: 2 }, () => ['', '']),
     round4: ['', ''],
     elite8: ''
   }
 ];
 
+// =====================================================
+// FINAL FOUR DATA
+// =====================================================
 const finalFour = {
   semis1: ['', ''],
   semis2: ['', ''],
@@ -80,50 +89,116 @@ const finalFour = {
   champion: ''
 };
 
+// =====================================================
+// USER PICKS (FOR SUBMISSION)
+// =====================================================
 const picks = {
   regions: regions.map(() => ({
-    round1: {}, round2: {}, round3: {}, round4: {}
+    round1: {},
+    round2: {},
+    round3: {},
+    round4: {}
   })),
-  finalFour: { semis1: {}, semis2: {}, championship: {} }
+  finalFour: {
+    semis1: {},
+    semis2: {},
+    championship: {}
+  }
 };
 
-function pickRegionRound(rIdx, roundName, mIdx, team) {
-  picks.regions[rIdx][roundName][`game${mIdx + 1}`] = team;
+// =====================================================
+// CORE PICK HANDLER
+// =====================================================
+function pickRegionRound(regionIndex, roundName, matchupIndex, team) {
+  if (locked) return;
 
-  const nextRoundName =
-    roundName === 'round1' ? 'round2' :
-    roundName === 'round2' ? 'round3' :
-    roundName === 'round3' ? 'round4' :
-    null;
+  // save user pick
+  picks.regions[regionIndex][roundName][`game${matchupIndex + 1}`] = team;
 
-  if (nextRoundName) {
-    const nextMIdx = Math.floor(mIdx / 2);
-    const slot = mIdx % 2;
-    regions[rIdx][nextRoundName][nextMIdx][slot] = team;
+  let nextRound = null;
+  if (roundName === 'round1') nextRound = 'round2';
+  if (roundName === 'round2') nextRound = 'round3';
+  if (roundName === 'round3') nextRound = 'round4';
 
-    // ✅ FIX: clear AFTER current round, not next round
-    clearRegionDownstream(rIdx, roundName);
+  if (nextRound) {
+    const nextMatchup = Math.floor(matchupIndex / 2);
+    const slot = matchupIndex % 2;
+
+    regions[regionIndex][nextRound][nextMatchup][slot] = team;
+
+    // 🔴 CRITICAL FIX:
+    // clear ONLY rounds AFTER the one just written
+    clearRegionDownstream(regionIndex, nextRound);
   } else {
-    regions[rIdx].elite8 = team;
+    regions[regionIndex].elite8 = team;
     updateFinalFour();
   }
 
   renderBracket();
 }
 
-function clearRegionDownstream(rIdx, fromRound) {
-  const rounds = ['round2', 'round3', 'round4'];
-  const start = rounds.indexOf(fromRound) + 1;
+// =====================================================
+// CLEAR DOWNSTREAM (SAFE)
+// =====================================================
+function clearRegionDownstream(regionIndex, fromRound) {
+  const roundOrder = ['round2', 'round3', 'round4'];
+  const startIdx = roundOrder.indexOf(fromRound) + 1;
 
-  for (let i = start; i < rounds.length; i++) {
-    regions[rIdx][rounds[i]] =
-      Array(Math.pow(2, 3 - i)).fill(['', '']);
+  for (let i = startIdx; i < roundOrder.length; i++) {
+    const round = roundOrder[i];
+    const size = Math.pow(2, roundOrder.length - i);
+    regions[regionIndex][round] = Array.from({ length: size }, () => ['', '']);
   }
 
-  regions[rIdx].elite8 = '';
+  regions[regionIndex].elite8 = '';
   updateFinalFour();
 }
 
-/* EVERYTHING ELSE IN YOUR FILE STAYS THE SAME */
+// =====================================================
+// FINAL FOUR UPDATE
+// =====================================================
+function updateFinalFour() {
+  finalFour.semies1 = ['', ''];
+  finalFour.semies2 = ['', ''];
+  finalFour.championship = ['', ''];
+  finalFour.champion = '';
+}
 
+// =====================================================
+// RENDER (AUTHORITATIVE)
+// =====================================================
+function renderBracket() {
+  document.querySelectorAll('.match').forEach(match => {
+    const regionIndex = Number(match.dataset.regionIndex);
+    const round = match.dataset.round;
+    const matchupIndex = Number(match.dataset.matchup);
+
+    let teams = [];
+
+    if (round === 'round1') teams = regions[regionIndex].round1[matchupIndex];
+    if (round === 'round2') teams = regions[regionIndex].round2[matchupIndex];
+    if (round === 'round3') teams = regions[regionIndex].round3[matchupIndex];
+    if (round === 'round4') teams = regions[regionIndex].round4;
+
+    match.innerHTML = '';
+
+    teams.forEach(team => {
+      const div = document.createElement('div');
+      div.textContent = team;
+      div.className = 'team';
+
+      if (team) {
+        div.addEventListener('click', () =>
+          pickRegionRound(regionIndex, round, matchupIndex, team)
+        );
+      }
+
+      match.appendChild(div);
+    });
+  });
+}
+
+// =====================================================
+// INIT
+// =====================================================
 renderBracket();
