@@ -89,8 +89,9 @@ const picks = {
 
 function renderBracket() {
   document.querySelectorAll('.round').forEach(round => {
-    const h3Text = round.querySelector('h3').textContent;
-    round.innerHTML = '<h3>' + h3Text + '</h3>';
+    const h3 = round.querySelector('h3');
+    const h3Text = h3 ? h3.textContent : '';
+    round.innerHTML = h3Text ? '<h3>' + h3Text + '</h3>' : '';
   });
 
   // Left side: South (0) and Midwest (1)
@@ -113,14 +114,8 @@ function renderBracket() {
   renderRegion('round-4-right', 2, 'round4');
   renderRegion('round-4-right', 3, 'round4');
 
-  // Final Four left: semis1 (South vs Midwest)
-  renderFinalFourMatch('round-5-left', finalFour.semis1, 'semis1', 0);
-
-  // Final Four right: semis2 (East vs West)
-  renderFinalFourMatch('round-5-right', finalFour.semis2, 'semis2', 0);
-
-  // Championship
-  renderFinalFourMatch('round-6-left', finalFour.championship, 'championship', 0);
+  // Final Four - Combined for proper alignment
+  renderFinalFour();
 
   // Champion
   const champRound = document.getElementById('champion');
@@ -157,7 +152,7 @@ function renderRegion(roundId, rIdx, roundName) {
       slot.textContent = teams[s] || '';
       
       if (teams[s] && !locked) {
-        slot.onclick = () => pickRegionRound(rIdx, roundName, m, s, teams[s]);
+        slot.onclick = () => pickRegionRound(rIdx, roundName, m, teams[s]);
         slot.classList.add('clickable');
       } else if (!teams[s]) {
         slot.classList.add('empty');
@@ -172,69 +167,127 @@ function renderRegion(roundId, rIdx, roundName) {
   roundEl.appendChild(regionEl);
 }
 
-function renderFinalFourMatch(roundId, teams, stage, gameIdx) {
-  const roundEl = document.getElementById(roundId);
-  const matchEl = document.createElement('div');
-  matchEl.className = 'match';
+function renderFinalFour() {
+  // Render semis1 on left (South vs Midwest)
+  const leftSemis = document.getElementById('round-5-left');
+  const semis1Match = document.createElement('div');
+  semis1Match.className = 'match final-four-match';
   
   for (let s = 0; s < 2; s++) {
     const slot = document.createElement('div');
     slot.className = 'slot';
-    slot.textContent = teams[s] || '';
+    slot.textContent = finalFour.semis1[s] || '';
     
-    if (teams[s] && !locked) {
-      slot.onclick = () => pickFinalFour(stage, s, teams[s]);
+    if (finalFour.semis1[s] && !locked) {
+      slot.onclick = () => pickFinalFour('semis1', finalFour.semis1[s]);
       slot.classList.add('clickable');
-    } else if (!teams[s]) {
+    } else if (!finalFour.semis1[s]) {
       slot.classList.add('empty');
     }
     
-    matchEl.appendChild(slot);
+    semis1Match.appendChild(slot);
   }
+  leftSemis.appendChild(semis1Match);
+
+  // Render semis2 on right (East vs West)
+  const rightSemis = document.getElementById('round-5-right');
+  const semis2Match = document.createElement('div');
+  semis2Match.className = 'match final-four-match';
   
-  roundEl.appendChild(matchEl);
+  for (let s = 0; s < 2; s++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    slot.textContent = finalFour.semis2[s] || '';
+    
+    if (finalFour.semis2[s] && !locked) {
+      slot.onclick = () => pickFinalFour('semis2', finalFour.semis2[s]);
+      slot.classList.add('clickable');
+    } else if (!finalFour.semis2[s]) {
+      slot.classList.add('empty');
+    }
+    
+    semis2Match.appendChild(slot);
+  }
+  rightSemis.appendChild(semis2Match);
+
+  // Render championship on left
+  const champRound = document.getElementById('round-6-left');
+  const champMatch = document.createElement('div');
+  champMatch.className = 'match championship-match';
+  
+  for (let s = 0; s < 2; s++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    slot.textContent = finalFour.championship[s] || '';
+    
+    if (finalFour.championship[s] && !locked) {
+      slot.onclick = () => pickFinalFour('championship', finalFour.championship[s]);
+      slot.classList.add('clickable');
+    } else if (!finalFour.championship[s]) {
+      slot.classList.add('empty');
+    }
+    
+    champMatch.appendChild(slot);
+  }
+  champRound.appendChild(champMatch);
 }
 
-function pickRegionRound(rIdx, roundName, mIdx, slotIdx, team) {
+function pickRegionRound(rIdx, roundName, mIdx, team) {
   if (locked) return;
+  
+  console.log('Picking:', { rIdx, roundName, mIdx, team });
   
   // Record the pick
   picks.regions[rIdx][roundName][`game${mIdx + 1}`] = team;
   
   // Determine next round
-  const roundMap = { 'round1': 'round2', 'round2': 'round3', 'round3': 'round4', 'round4': 'elite8' };
-  const nextRound = roundMap[roundName];
-  
-  if (nextRound === 'elite8') {
-    // This was Elite Eight, set the winner
-    regions[rIdx].elite8 = team;
-    clearRegionDownstream(rIdx, null);
-    updateFinalFour();
-  } else {
-    // Advance to next round
+  if (roundName === 'round1') {
     const nextMIdx = Math.floor(mIdx / 2);
     const nextSlotIdx = mIdx % 2;
-    regions[rIdx][nextRound][nextMIdx][nextSlotIdx] = team;
-    
-    // Clear downstream rounds
-    clearRegionDownstream(rIdx, nextRound);
+    regions[rIdx].round2[nextMIdx][nextSlotIdx] = team;
+    clearRegionDownstream(rIdx, 'round2', nextMIdx);
+  } else if (roundName === 'round2') {
+    const nextMIdx = Math.floor(mIdx / 2);
+    const nextSlotIdx = mIdx % 2;
+    regions[rIdx].round3[nextMIdx][nextSlotIdx] = team;
+    clearRegionDownstream(rIdx, 'round3', nextMIdx);
+  } else if (roundName === 'round3') {
+    const nextMIdx = Math.floor(mIdx / 2);
+    const nextSlotIdx = mIdx % 2;
+    regions[rIdx].round4[nextMIdx][nextSlotIdx] = team;
+    clearRegionDownstream(rIdx, 'round4', nextMIdx);
+  } else if (roundName === 'round4') {
+    // Elite Eight winner
+    regions[rIdx].elite8 = team;
+    updateFinalFour();
   }
   
   renderBracket();
 }
 
-function pickFinalFour(stage, slotIdx, team) {
+function pickFinalFour(stage, team) {
   if (locked) return;
+  
+  console.log('Picking Final Four:', { stage, team });
   
   picks.finalFour[stage].game1 = team;
   
-  if (stage === 'semis1' || stage === 'semis2') {
-    // Advance to championship
-    const champSlot = stage === 'semis1' ? 0 : 1;
-    finalFour.championship[champSlot] = team;
-    
-    // Clear championship winner if needed
-    if (!finalFour.championship[0] || !finalFour.championship[1]) {
+  if (stage === 'semis1') {
+    // Advance to championship slot 0
+    finalFour.championship[0] = team;
+    // Clear champion if needed
+    if (finalFour.champion && 
+        finalFour.champion !== finalFour.championship[0] && 
+        finalFour.champion !== finalFour.championship[1]) {
+      finalFour.champion = '';
+    }
+  } else if (stage === 'semis2') {
+    // Advance to championship slot 1
+    finalFour.championship[1] = team;
+    // Clear champion if needed
+    if (finalFour.champion && 
+        finalFour.champion !== finalFour.championship[0] && 
+        finalFour.champion !== finalFour.championship[1]) {
       finalFour.champion = '';
     }
   } else if (stage === 'championship') {
@@ -245,49 +298,57 @@ function pickFinalFour(stage, slotIdx, team) {
   renderBracket();
 }
 
-function clearRegionDownstream(rIdx, fromRound) {
-  const rounds = ['round2', 'round3', 'round4'];
-  
-  if (fromRound === null) {
-    // Clear everything from Elite Eight
+function clearRegionDownstream(rIdx, fromRound, fromMatchIdx) {
+  // Clear only the affected downstream matches
+  if (fromRound === 'round2') {
+    // Clear downstream round3 and round4
+    const r3Idx = Math.floor(fromMatchIdx / 2);
+    regions[rIdx].round3[r3Idx] = ['', ''];
+    regions[rIdx].round4[0] = ['', ''];
     regions[rIdx].elite8 = '';
     updateFinalFour();
-    return;
+  } else if (fromRound === 'round3') {
+    // Clear downstream round4
+    regions[rIdx].round4[0] = ['', ''];
+    regions[rIdx].elite8 = '';
+    updateFinalFour();
+  } else if (fromRound === 'round4') {
+    // Clear elite8
+    regions[rIdx].elite8 = '';
+    updateFinalFour();
   }
-  
-  const startIdx = rounds.indexOf(fromRound);
-  
-  for (let i = startIdx + 1; i < rounds.length; i++) {
-    const numMatches = i === 0 ? 4 : i === 1 ? 2 : 1;
-    regions[rIdx][rounds[i]] = Array(numMatches).fill(null).map(() => ['', '']);
-  }
-  
-  regions[rIdx].elite8 = '';
-  updateFinalFour();
 }
 
 function updateFinalFour() {
-  // Update Final Four matchups
+  // Update Final Four matchups based on Elite Eight winners
+  const oldSemis1_0 = finalFour.semis1[0];
+  const oldSemis1_1 = finalFour.semis1[1];
+  const oldSemis2_0 = finalFour.semis2[0];
+  const oldSemis2_1 = finalFour.semis2[1];
+  
   finalFour.semis1[0] = regions[0].elite8;
   finalFour.semis1[1] = regions[1].elite8;
   finalFour.semis2[0] = regions[2].elite8;
   finalFour.semis2[1] = regions[3].elite8;
   
-  // Clear championship if semis aren't complete
-  if (!finalFour.semis1[0] || !finalFour.semis1[1]) {
-    if (finalFour.championship[0] === regions[0].elite8 || finalFour.championship[0] === regions[1].elite8) {
+  // Clear championship if semis changed
+  if (oldSemis1_0 !== finalFour.semis1[0] || oldSemis1_1 !== finalFour.semis1[1]) {
+    if (finalFour.championship[0] === oldSemis1_0 || finalFour.championship[0] === oldSemis1_1) {
       finalFour.championship[0] = '';
     }
   }
   
-  if (!finalFour.semis2[0] || !finalFour.semis2[1]) {
-    if (finalFour.championship[1] === regions[2].elite8 || finalFour.championship[1] === regions[3].elite8) {
+  if (oldSemis2_0 !== finalFour.semis2[0] || oldSemis2_1 !== finalFour.semis2[1]) {
+    if (finalFour.championship[1] === oldSemis2_0 || finalFour.championship[1] === oldSemis2_1) {
       finalFour.championship[1] = '';
     }
   }
   
-  // Clear champion if championship isn't complete
+  // Clear champion if championship changed
   if (!finalFour.championship[0] || !finalFour.championship[1]) {
+    finalFour.champion = '';
+  } else if (finalFour.champion !== finalFour.championship[0] && 
+             finalFour.champion !== finalFour.championship[1]) {
     finalFour.champion = '';
   }
 }
