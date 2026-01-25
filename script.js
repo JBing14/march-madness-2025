@@ -91,7 +91,7 @@ function renderBracket() {
   // Clear content but preserve h3
   document.querySelectorAll('.round').forEach(round => {
     const h3 = round.querySelector('h3');
-    while (round.firstChild) round.removeChild(round.firstChild);
+    round.innerHTML = '';
     round.appendChild(h3);
   });
 
