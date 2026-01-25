@@ -40,13 +40,13 @@ const regions = [
   {
     name: 'East',
     round1: [
-      ['1 Duke', '16 Mount St. Mary's'],
+      ['1 Duke', '16 Mount St. Mary\'s'],
       ['8 Mississippi State', '9 Baylor'],
       ['5 Oregon', '12 Liberty'],
       ['4 Arizona', '13 Akron'],
       ['6 BYU', '11 VCU'],
       ['3 Wisconsin', '14 Montana'],
-      ['7 Saint Mary's', '10 Vanderbilt'],
+      ['7 Saint Mary\'s', '10 Vanderbilt'],
       ['2 Alabama', '15 Robert Morris']
     ],
     round2: Array(4).fill(['', '']),
@@ -64,7 +64,7 @@ const regions = [
       ['6 Missouri', '11 Drake'],
       ['3 Texas Tech', '14 UNC Wilmington'],
       ['7 Kansas', '10 Arkansas'],
-      ['2 St. John's', '15 Omaha']
+      ['2 St. John\'s', '15 Omaha']
     ],
     round2: Array(4).fill(['', '']),
     round3: Array(2).fill(['', '']),
@@ -88,9 +88,11 @@ const picks = {
 };
 
 function renderBracket() {
-  // Clear rounds but keep h3
+  // Clear content but preserve h3
   document.querySelectorAll('.round').forEach(round => {
-    while (round.children.length > 1) round.removeChild(round.lastChild);
+    const h3 = round.querySelector('h3');
+    while (round.firstChild) round.removeChild(round.firstChild);
+    round.appendChild(h3);
   });
 
   // Left side: Regions 0 (South - top) and 1 (Midwest - bottom)
@@ -152,9 +154,7 @@ function renderRegion(roundEl, rIdx, roundName) {
       slot.className = 'slot' + (team ? '' : ' empty');
       slot.textContent = team;
       if (team && !locked) {
-        slot.onclick = () => {
-          pickRegionRound(rIdx, roundName, m, team);
-        };
+        slot.onclick = () => pickRegionRound(rIdx, roundName, m, team);
       }
       matchEl.appendChild(slot);
     });
