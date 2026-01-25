@@ -106,10 +106,11 @@ nav a:hover {
 .bracket-wrapper {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   position: relative;
-  min-height: 1400px;
-  min-width: 1400px;
+  min-height: 1600px;
+  min-width: 1600px;
+  padding-top: 60px;
 }
 
 /* EACH ROUND COLUMN */
@@ -125,23 +126,26 @@ nav a:hover {
   width: 180px;
 }
 
-/* ROUND HEADERS */
+/* ROUND HEADERS - FIXED AT TOP */
 .round h3 {
+  position: absolute;
+  top: -50px;
+  left: 0;
+  right: 0;
   text-align: center;
-  font-size: 0.85em;
-  margin: 0 0 15px 0;
-  padding: 8px 4px;
-  color: #003087;
-  background: white;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  border-bottom: 2px solid #003087;
+  font-size: 0.9em;
+  margin: 0;
+  padding: 10px 4px;
+  color: white;
+  background: #003087;
+  border-radius: 4px;
+  z-index: 100;
+  font-weight: bold;
 }
 
 /* REGION BLOCKS */
 .region {
-  margin-bottom: 60px;
+  margin-bottom: 80px;
   display: flex;
   flex-direction: column;
 }
@@ -152,108 +156,118 @@ nav a:hover {
 
 .region h4 {
   text-align: center;
-  margin: 0 0 10px 0;
-  padding: 5px;
+  margin: 0 0 15px 0;
+  padding: 8px;
   color: white;
-  background: #003087;
-  font-size: 0.9em;
+  background: #ff6200;
+  font-size: 0.95em;
   border-radius: 4px;
+  font-weight: bold;
 }
 
-/* MATCHES - Pyramid Spacing */
+/* MATCHES - Traditional Bracket Spacing */
 .match {
   display: flex;
   flex-direction: column;
-  margin-bottom: 10px;
+  position: relative;
 }
 
-/* Round 1 - Base spacing */
+/* Round 1 - Tight spacing (40px per match) */
 .round-1 .match {
-  margin-bottom: 8px;
+  height: 40px;
+  margin-bottom: 4px;
+  justify-content: center;
 }
 
-/* Round 2 - Double the spacing */
+/* Round 2 - Centered between two R1 matches (88px total = 2*40 + 8) */
 .round-2 .match {
-  margin-bottom: 66px;
+  height: 88px;
+  margin-bottom: 4px;
+  justify-content: center;
 }
 
-.round-2 .match:first-of-type {
-  margin-top: 33px;
-}
-
-/* Round 3 - Quadruple the spacing */
+/* Round 3 - Centered between two R2 matches (184px total = 2*88 + 8) */
 .round-3 .match {
-  margin-bottom: 164px;
+  height: 184px;
+  margin-bottom: 4px;
+  justify-content: center;
 }
 
-.round-3 .match:first-of-type {
-  margin-top: 82px;
-}
-
-/* Round 4 - 8x spacing */
+/* Round 4 - Centered between two R3 matches (376px total = 2*184 + 8) */
 .round-4 .match {
-  margin-bottom: 360px;
+  height: 376px;
+  margin-bottom: 4px;
+  justify-content: center;
 }
 
-.round-4 .match:first-of-type {
-  margin-top: 180px;
+/* Final Four - Centered between regions */
+.round-5 {
+  padding-top: 400px;
 }
 
-/* Round 5 - Final Four spacing */
-.round-5 .match {
-  margin-top: 380px;
+.final-four-match {
+  height: 80px;
+  justify-content: center;
 }
 
-/* Round 6 - Championship spacing */
-.round-6 .match {
-  margin-top: 420px;
+/* Championship */
+.round-6 {
+  padding-top: 440px;
+}
+
+.championship-match {
+  height: 80px;
+  justify-content: center;
 }
 
 /* Champion */
 .round-7 {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
+  padding-top: 460px;
 }
 
 .champion-slot {
-  margin-top: 20px;
-  font-size: 1.2em !important;
+  margin-top: 0;
+  font-size: 1.3em !important;
   font-weight: bold;
   background: #FFD700 !important;
   color: #003087 !important;
-  padding: 15px 10px !important;
+  padding: 20px 15px !important;
   border: 3px solid #003087 !important;
+  min-width: 150px;
 }
 
 /* SLOTS */
 .slot {
   background: #f9f9f9;
-  padding: 8px 6px;
-  margin: 3px 0;
+  padding: 6px 8px;
+  margin: 2px 0;
   border-radius: 4px;
   text-align: center;
   font-size: 0.75em;
   border: 1px solid #ddd;
   transition: all 0.2s ease;
-  min-height: 30px;
+  min-height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1.2;
 }
 
 .slot.clickable {
   cursor: pointer;
   background: #fff;
+  border: 2px solid #003087;
 }
 
 .slot.clickable:hover {
   background: #003087;
   color: white;
   transform: scale(1.05);
-  border-color: #003087;
-  box-shadow: 0 2px 8px rgba(0,48,135,0.3);
+  box-shadow: 0 2px 8px rgba(0,48,135,0.4);
 }
 
 .slot.empty {
@@ -262,6 +276,7 @@ nav a:hover {
   cursor: not-allowed;
   font-style: italic;
   font-size: 0.7em;
+  border: 1px solid #ccc;
 }
 
 .slot.empty::after {
@@ -284,26 +299,31 @@ nav a:hover {
   }
   
   .bracket-wrapper {
-    min-width: 1400px;
+    min-width: 1600px;
   }
 }
 
 @media (max-width: 768px) {
   .round {
-    width: 120px;
+    width: 110px;
   }
   
   .round h3 {
-    font-size: 0.7em;
+    font-size: 0.75em;
+    padding: 8px 2px;
   }
   
   .slot {
     font-size: 0.65em;
-    padding: 6px 4px;
+    padding: 5px 4px;
   }
   
   .region h4 {
     font-size: 0.8em;
+  }
+  
+  .bracket-wrapper {
+    min-width: 1400px;
   }
 }
 
@@ -366,4 +386,92 @@ nav a:hover {
 
 .btn:hover {
   opacity: 0.9;
+}
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 0.85em;
+}
+
+/* Bootstrap Grid */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -10px;
+}
+
+.col-md-3 {
+  flex: 0 0 25%;
+  padding: 10px;
+}
+
+.col-md-12 {
+  flex: 0 0 100%;
+  padding: 10px;
+}
+
+.form-select,
+.form-control {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.mb-2 {
+  margin-bottom: 10px;
+}
+
+.mb-3 {
+  margin-bottom: 15px;
+}
+
+.mt-3 {
+  margin-top: 15px;
+}
+
+.mt-4 {
+  margin-top: 20px;
+}
+
+.my-4 {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.bg-light {
+  background: #f8f9fa;
+}
+
+.text-primary {
+  color: #003087;
+}
+
+.text-danger {
+  color: #b00020;
+}
+
+pre {
+  background: #f4f4f4;
+  padding: 15px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card-body {
+  padding: 20px;
 }
