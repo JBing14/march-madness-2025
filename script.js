@@ -490,25 +490,26 @@ async function loadOutlinedBoxes() {
 async function loadBracketSetup() {
   try {
     const setupDoc = await db.collection('bracketSetup').doc('current').get();
-    if (setupDoc.exists && setupDoc.data().regions) {
-      const newRegions = setupDoc.data().regions;
+    if (setupDoc.exists) {
+      const data = setupDoc.data();
       
-      // Convert Firebase format back to array format
-      newRegions.forEach((newRegion, idx) => {
-        if (regions[idx]) {
-          regions[idx].name = newRegion.name;
+      // Convert flat Firebase structure back to array format
+      for (let i = 0; i < 4; i++) {
+        const regionData = data[`region${i}`];
+        if (regionData && regions[i]) {
+          regions[i].name = regionData.name;
           
           // Convert round1 from object format to array format
-          if (newRegion.round1) {
-            regions[idx].round1 = Object.keys(newRegion.round1)
-              .sort() // Ensure game1, game2, game3... order
+          if (regionData.round1) {
+            regions[i].round1 = Object.keys(regionData.round1)
+              .sort()
               .map(gameKey => {
-                const game = newRegion.round1[gameKey];
+                const game = regionData.round1[gameKey];
                 return [game.team1, game.team2];
               });
           }
         }
-      });
+      }
       
       console.log('Loaded bracket setup from Firebase:', regions.map(r => r.name));
       bracketLoaded = true;
