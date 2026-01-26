@@ -75,42 +75,50 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script>
-    // Initialize Firebase for ticker
-    const firebaseConfig = {
-      apiKey: "AIzaSyB27qEP0k2PR8Zz_z_A8KjGcXvxX9OROQA",
-      authDomain: "marchmadness2025-24f04.firebaseapp.com",
-      projectId: "marchmadness2025-24f04",
-      storageBucket: "marchmadness2025-24f04.firebasestorage.app",
-      messagingSenderId: "916205408985",
-      appId: "1:916205408985:web:1dd57fc8704c6c0e8fe4c8",
-      measurementId: "G-TKTZB2FFRB"
-    };
-    firebase.initializeApp(firebaseConfig);
+    // Initialize Firebase ONCE for ticker (leaderboard.js module uses its own init)
+    if (!firebase.apps.length) {
+      const firebaseConfig = {
+        apiKey: "AIzaSyB27qEP0k2PR8Zz_z_A8KjGcXvxX9OROQA",
+        authDomain: "marchmadness2025-24f04.firebaseapp.com",
+        projectId: "marchmadness2025-24f04",
+        storageBucket: "marchmadness2025-24f04.firebasestorage.app",
+        messagingSenderId: "916205408985",
+        appId: "1:916205408985:web:1dd57fc8704c6c0e8fe4c8",
+        measurementId: "G-TKTZB2FFRB"
+      };
+      firebase.initializeApp(firebaseConfig);
+    }
 
     // Load admin ticker messages
-    const db = firebase.firestore();
-    db.collection('adminMessages').doc('ticker').onSnapshot(doc => {
-      if (doc.exists && doc.data().enabled) {
-        const data = doc.data();
-        const messages = data.messages || [];
+    document.addEventListener('DOMContentLoaded', function() {
+      const db = firebase.firestore();
+      db.collection('adminMessages').doc('ticker').onSnapshot(doc => {
+        const tickerContent = document.getElementById('tickerContent');
+        const adminTicker = document.getElementById('adminTicker');
         
-        if (messages.length > 0) {
-          const tickerContent = document.getElementById('tickerContent');
-          const adminTicker = document.getElementById('adminTicker');
+        if (doc.exists && doc.data().enabled) {
+          const data = doc.data();
+          const messages = data.messages || [];
           
-          // Build ticker HTML with multiple messages
-          let tickerHTML = '';
-          messages.forEach(msg => {
-            tickerHTML += `<span class="ticker-item">${msg}</span>`;
-          });
-          
-          // Duplicate for seamless loop
-          tickerContent.innerHTML = tickerHTML + tickerHTML;
-          adminTicker.style.display = 'block';
+          if (messages.length > 0) {
+            // Build ticker HTML with multiple messages
+            let tickerHTML = '';
+            messages.forEach(msg => {
+              tickerHTML += `<span class="ticker-item">${msg}</span>`;
+            });
+            
+            // Duplicate for seamless loop
+            tickerContent.innerHTML = tickerHTML + tickerHTML;
+            adminTicker.style.display = 'block';
+          } else {
+            adminTicker.style.display = 'none';
+          }
+        } else {
+          adminTicker.style.display = 'none';
         }
-      } else {
-        document.getElementById('adminTicker').style.display = 'none';
-      }
+      }, err => {
+        console.log('Ticker not configured yet');
+      });
     });
   </script>
   <script type="module" src="leaderboard.js"></script>
