@@ -36,6 +36,10 @@ const editForm = document.getElementById('editForm');
 const editName = document.getElementById('editName');
 const saveEdit = document.getElementById('saveEdit');
 const cancelEdit = document.getElementById('cancelEdit');
+const bracketUpload = document.getElementById('bracketUpload');
+const uploadBtn = document.getElementById('uploadBtn');
+const uploadStatus = document.getElementById('uploadStatus');
+const downloadTemplate = document.getElementById('downloadTemplate');
 
 let currentEditId = null;
 let allBrackets = [];
@@ -105,6 +109,7 @@ onAuthStateChanged(auth, user => {
     loginDiv.style.display = 'none';
     dashboardDiv.style.display = 'block';
     adminEmailSpan.textContent = user.email;
+    loadBracketSetup();
     loadBrackets();
     loadOfficialResults();
   } else {
@@ -112,6 +117,20 @@ onAuthStateChanged(auth, user => {
     dashboardDiv.style.display = 'none';
   }
 });
+
+// Load bracket setup from Firebase
+async function loadBracketSetup() {
+  try {
+    const setupDoc = await getDoc(doc(db, 'bracketSetup', 'current'));
+    if (setupDoc.exists()) {
+      const setup = setupDoc.data();
+      masterBracket.regions = setup.regions;
+      console.log('Loaded bracket setup from Firebase');
+    }
+  } catch (err) {
+    console.log('No custom bracket setup found, using default');
+  }
+}
 
 loginBtn.onclick = async () => {
   console.log('Login button clicked');
@@ -125,6 +144,178 @@ loginBtn.onclick = async () => {
 };
 
 logoutBtn.onclick = () => signOut(auth);
+
+// Download CSV Template
+downloadTemplate.onclick = (e) => {
+  e.preventDefault();
+  
+  const csvContent = `Region,Game,Seed1,Team1,Seed2,Team2
+South,1,1,Auburn,16,Alabama St
+South,2,8,Louisville,9,Creighton
+South,3,5,Michigan,12,UC San Diego
+South,4,4,Texas A&M,13,Yale
+South,5,6,Ole Miss,11,North Carolina
+South,6,3,Iowa St,14,Lipscomb
+South,7,7,Marquette,10,New Mexico
+South,8,2,Michigan St,15,Bryant
+Midwest,1,1,Houston,16,SIU Edwardsville
+Midwest,2,8,Gonzaga,9,Georgia
+Midwest,3,5,Clemson,12,McNeese
+Midwest,4,4,Purdue,13,High Point
+Midwest,5,6,Illinois,11,Xavier
+Midwest,6,3,Kentucky,14,Troy
+Midwest,7,7,UCLA,10,Utah St
+Midwest,8,2,Tennessee,15,Wofford
+East,1,1,Duke,16,Mount St Marys
+East,2,8,Mississippi St,9,Baylor
+East,3,5,Oregon,12,Liberty
+East,4,4,Arizona,13,Akron
+East,5,6,BYU,11,VCU
+East,6,3,Wisconsin,14,Montana
+East,7,7,Saint Marys,10,Vanderbilt
+East,8,2,Alabama,15,Robert Morris
+West,1,1,Florida,16,Norfolk St
+West,2,8,UConn,9,Oklahoma
+West,3,5,Memphis,12,Colorado St
+West,4,4,Maryland,13,Grand Canyon
+West,5,6,Missouri,11,Drake
+West,6,3,Texas Tech,14,UNC Wilmington
+West,7,7,Kansas,10,Arkansas
+West,8,2,St Johns,15,Omaha`;
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'march_madness_bracket_template.csv';
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
+
+// Upload and Parse CSV/Excel
+uploadBtn.onclick = async () => {
+  const file = bracketUpload.files[0];
+  if (!file) {
+    uploadStatus.textContent = 'Please select a file first.';
+    uploadStatus.style.color = 'red';
+    return;
+  }
+  
+  uploadStatus.textContent = 'Processing file...';
+  uploadStatus.style.color = 'blue';
+  
+  try {
+    let csvText;
+    
+    // Check if Excel file
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      // Use SheetJS to parse Excel
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      csvText = XLSX.utils.sheet_to_csv(firstSheet);
+    } else {
+      // Read as CSV
+      csvText = await file.text();
+    }
+    
+    // Parse CSV
+    const parsed = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => header.trim()
+    });
+    
+    if (parsed.errors.length > 0) {
+      uploadStatus.textContent = 'Error parsing file: ' + parsed.errors[0].message;
+      uploadStatus.style.color = 'red';
+      return;
+    }
+    
+    // Build bracket structure from CSV
+    const newBracket = buildBracketFromCSV(parsed.data);
+    
+    if (!newBracket) {
+      uploadStatus.textContent = 'Invalid file format. Please use the template.';
+      uploadStatus.style.color = 'red';
+      return;
+    }
+    
+    // Save to Firebase
+    await setDoc(doc(db, 'bracketSetup', 'current'), {
+      regions: newBracket.regions,
+      updatedAt: new Date(),
+      updatedBy: auth.currentUser.email
+    });
+    
+    // Update masterBracket
+    masterBracket.regions = newBracket.regions;
+    
+    uploadStatus.textContent = `Success! Bracket updated with ${newBracket.regions.length} regions. Refresh the page to see changes.`;
+    uploadStatus.style.color = 'green';
+    
+    // Rebuild controls with new teams
+    setTimeout(() => {
+      buildControls();
+    }, 1000);
+    
+  } catch (err) {
+    console.error('Upload error:', err);
+    uploadStatus.textContent = 'Error: ' + err.message;
+    uploadStatus.style.color = 'red';
+  }
+};
+
+function buildBracketFromCSV(data) {
+  try {
+    const regions = {};
+    
+    data.forEach(row => {
+      const regionName = row.Region?.trim();
+      const game = parseInt(row.Game);
+      const seed1 = row.Seed1?.trim();
+      const team1 = row.Team1?.trim();
+      const seed2 = row.Seed2?.trim();
+      const team2 = row.Team2?.trim();
+      
+      if (!regionName || !game || !team1 || !team2) {
+        throw new Error('Missing required fields in CSV');
+      }
+      
+      if (!regions[regionName]) {
+        regions[regionName] = {
+          name: regionName,
+          round1: []
+        };
+      }
+      
+      // Build team string with seed
+      const teamStr1 = seed1 ? `${seed1} ${team1}` : team1;
+      const teamStr2 = seed2 ? `${seed2} ${team2}` : team2;
+      
+      regions[regionName].round1.push([teamStr1, teamStr2]);
+    });
+    
+    // Convert to array and validate
+    const regionArray = Object.values(regions);
+    
+    if (regionArray.length !== 4) {
+      throw new Error('Must have exactly 4 regions');
+    }
+    
+    regionArray.forEach(region => {
+      if (region.round1.length !== 8) {
+        throw new Error(`Region ${region.name} must have exactly 8 games (16 teams)`);
+      }
+    });
+    
+    return { regions: regionArray };
+    
+  } catch (err) {
+    console.error('CSV parsing error:', err);
+    return null;
+  }
+}
 
 function buildControls() {
   resultsControls.innerHTML = '';
