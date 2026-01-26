@@ -127,12 +127,14 @@ nav a:hover {
 
 .bracket-wrapper {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
   position: relative;
   min-height: 2000px;
   min-width: 1800px;
   padding-top: 60px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 /* EACH ROUND COLUMN */
