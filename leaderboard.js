@@ -110,6 +110,7 @@ function renderLeaderboard() {
       email: bracket.email,
       tiebreaker: bracket.tiebreaker,
       total: score ? score.total : 0,
+      breakdown: score ? score.breakdown : null,
       isScored: !!score,
       picks: bracket.picks
     };
@@ -135,9 +136,22 @@ function renderLeaderboard() {
     const rank = entry.isScored ? idx + 1 : '-';
     const score = entry.isScored ? entry.total : 'Not Scored';
     
+    // Get breakdown if scored
+    const breakdown = entry.breakdown || { 
+      round1: 0, round2: 0, round3: 0, round4: 0, 
+      semis: 0, championship: 0, bonus: 0 
+    };
+    
     tr.innerHTML = `
       <td><strong>${rank}</strong></td>
       <td>${entry.entryName || 'Unknown'}</td>
+      <td>${entry.isScored ? breakdown.round1 || 0 : '-'}</td>
+      <td>${entry.isScored ? breakdown.round2 || 0 : '-'}</td>
+      <td>${entry.isScored ? breakdown.round3 || 0 : '-'}</td>
+      <td>${entry.isScored ? breakdown.round4 || 0 : '-'}</td>
+      <td>${entry.isScored ? breakdown.semis || 0 : '-'}</td>
+      <td>${entry.isScored ? breakdown.championship || 0 : '-'}</td>
+      <td>${entry.isScored ? breakdown.bonus || 0 : '-'}</td>
       <td><strong>${score}</strong></td>
       <td>${entry.tiebreaker || 0}</td>
     `;
@@ -319,29 +333,52 @@ window.onclick = (e) => {
 
 exportPdf.onclick = () => {
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
+  const pdf = new jsPDF('landscape'); // Landscape for wider table
   
   pdf.setFontSize(18);
   pdf.setFont(undefined, 'bold');
   pdf.text('March Madness 2025 Leaderboard', 10, 15);
   
-  pdf.setFontSize(10);
+  pdf.setFontSize(9);
   pdf.setFont(undefined, 'normal');
   
   let y = 30;
   
+  // Headers
+  pdf.setFont(undefined, 'bold');
+  pdf.text('Rank', 10, y);
+  pdf.text('Name', 25, y);
+  pdf.text('R1', 80, y);
+  pdf.text('R2', 95, y);
+  pdf.text('R3', 110, y);
+  pdf.text('R4', 125, y);
+  pdf.text('FF', 140, y);
+  pdf.text('Champ', 155, y);
+  pdf.text('Bonus', 175, y);
+  pdf.text('Total', 195, y);
+  pdf.text('TB', 215, y);
+  pdf.setFont(undefined, 'normal');
+  
+  y += 8;
+  
   tableBody.querySelectorAll('tr').forEach(tr => {
     const cells = tr.querySelectorAll('td');
-    if (cells.length >= 4) {
-      const rank = cells[0].textContent;
-      const name = cells[1].textContent;
-      const score = cells[2].textContent;
-      const tiebreaker = cells[3].textContent;
+    if (cells.length >= 11) {
+      pdf.text(cells[0].textContent, 10, y); // Rank
+      pdf.text(cells[1].textContent.substring(0, 25), 25, y); // Name (truncated)
+      pdf.text(cells[2].textContent, 80, y); // R1
+      pdf.text(cells[3].textContent, 95, y); // R2
+      pdf.text(cells[4].textContent, 110, y); // R3
+      pdf.text(cells[5].textContent, 125, y); // R4
+      pdf.text(cells[6].textContent, 140, y); // FF
+      pdf.text(cells[7].textContent, 155, y); // Champ
+      pdf.text(cells[8].textContent, 175, y); // Bonus
+      pdf.text(cells[9].textContent, 195, y); // Total
+      pdf.text(cells[10].textContent, 215, y); // Tiebreaker
       
-      pdf.text(`${rank}. ${name} - ${score} pts (Tiebreaker: ${tiebreaker})`, 10, y);
-      y += 8;
+      y += 7;
       
-      if (y > 280) {
+      if (y > 185) {
         pdf.addPage();
         y = 20;
       }
