@@ -743,6 +743,8 @@ saveResultsBtn.onclick = async () => {
     }
   });
   
+  console.log('Saving outlined boxes:', outlinedBoxes);
+  
   try {
     await setDoc(doc(db, 'officialResults', 'current'), {
       winners,
@@ -752,9 +754,10 @@ saveResultsBtn.onclick = async () => {
     });
     
     officialResults = { winners, bonusGames, outlinedBoxes };
-    scoreStatus.textContent = 'Results saved! Outlined boxes will appear on bracket page. Click "Score All Brackets" to update scores.';
+    scoreStatus.textContent = `Results saved! ${outlinedBoxes.length} outlined boxes configured. Refresh the bracket page to see them.`;
     scoreStatus.style.color = 'green';
   } catch (err) {
+    console.error('Save error:', err);
     scoreStatus.textContent = 'Error: ' + err.message;
     scoreStatus.style.color = 'red';
   }
