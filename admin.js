@@ -802,7 +802,7 @@ function scoreBracket(picks, results) {
   let total = 0;
   const breakdown = { round1: 0, round2: 0, round3: 0, round4: 0, semis: 0, championship: 0, bonus: 0 };
   
-  const roundPoints = { round1: 1, round2: 2, round3: 4, round4: 8 };
+  const roundPoints = { round1: 1, round2: 3, round3: 5, round4: 7 };
   
   if (picks.regions) {
     picks.regions.forEach((region, rIdx) => {
@@ -829,19 +829,21 @@ function scoreBracket(picks, results) {
   }
   
   if (picks.finalFour) {
+    // Final Four (Semis) = 10 points each
     if (picks.finalFour.semis1?.game1?.pick === results.winners['semis1-game1']) {
-      total += 16;
-      breakdown.semis += 16;
+      total += 10;
+      breakdown.semis += 10;
     }
     
     if (picks.finalFour.semis2?.game1?.pick === results.winners['semis2-game1']) {
-      total += 16;
-      breakdown.semis += 16;
+      total += 10;
+      breakdown.semis += 10;
     }
     
+    // Championship = 20 points
     if (picks.finalFour.championship?.game1?.pick === results.winners['championship-game1']) {
-      total += 32;
-      breakdown.championship += 32;
+      total += 20;
+      breakdown.championship += 20;
     }
   }
   
