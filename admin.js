@@ -345,7 +345,7 @@ uploadBtn.onclick = async () => {
     
     console.log('Bracket data to save:', JSON.stringify(newBracket, null, 2));
     
-    // Create a completely flat structure for Firebase
+    // Create a completely flat structure for Firebase (NO NESTED ARRAYS!)
     const firebaseData = {
       region0: {
         name: newBracket.regions[0].name,
@@ -401,6 +401,7 @@ uploadBtn.onclick = async () => {
   }
 };
 
+// FIXED: This function now returns Firebase-friendly objects instead of nested arrays
 function buildBracketFromCSV(data) {
   try {
     const regionsMap = {};
@@ -420,7 +421,7 @@ function buildBracketFromCSV(data) {
       if (!regionsMap[regionName]) {
         regionsMap[regionName] = {
           name: regionName,
-          round1: []
+          round1: {}  // FIXED: Changed from array to object
         };
       }
       
@@ -428,7 +429,11 @@ function buildBracketFromCSV(data) {
       const teamStr1 = seed1 ? `${seed1} ${team1}` : team1;
       const teamStr2 = seed2 ? `${seed2} ${team2}` : team2;
       
-      regionsMap[regionName].round1.push([teamStr1, teamStr2]);
+      // FIXED: Store as object with game keys (Firebase-friendly, no nested arrays)
+      regionsMap[regionName].round1[`game${game}`] = {
+        team1: teamStr1,
+        team2: teamStr2
+      };
     });
     
     // Convert to array and validate
@@ -438,14 +443,13 @@ function buildBracketFromCSV(data) {
       throw new Error(`Must have exactly 4 regions, found ${regionArray.length}`);
     }
     
+    // FIXED: Check object keys instead of array length
     regionArray.forEach(region => {
-      if (region.round1.length !== 8) {
-        throw new Error(`Region "${region.name}" must have exactly 8 games (16 teams), found ${region.round1.length} games`);
+      const gameCount = Object.keys(region.round1).length;
+      if (gameCount !== 8) {
+        throw new Error(`Region "${region.name}" must have exactly 8 games (16 teams), found ${gameCount} games`);
       }
     });
-    
-    // Sort regions to ensure consistent order (optional, but helps with debugging)
-    // You can remove this if you want regions in CSV order
     
     return { regions: regionArray };
     
@@ -454,7 +458,6 @@ function buildBracketFromCSV(data) {
     return null;
   }
 }
-
 function buildControls() {
   resultsControls.innerHTML = '';
   
