@@ -131,7 +131,19 @@ async function loadBracketSetup() {
     const setupDoc = await getDoc(doc(db, 'bracketSetup', 'current'));
     if (setupDoc.exists()) {
       const setup = setupDoc.data();
-      masterBracket.regions = setup.regions;
+      
+      // Convert Firebase format back to array format
+      const convertedRegions = setup.regions.map(region => ({
+        name: region.name,
+        round1: Object.keys(region.round1)
+          .sort() // Ensure game1, game2, game3... order
+          .map(gameKey => {
+            const game = region.round1[gameKey];
+            return [game.team1, game.team2];
+          })
+      }));
+      
+      masterBracket.regions = convertedRegions;
       console.log('Loaded bracket setup from Firebase');
     }
   } catch (err) {
@@ -351,7 +363,7 @@ uploadBtn.onclick = async () => {
 
 function buildBracketFromCSV(data) {
   try {
-    const regions = {};
+    const regionsMap = {};
     
     data.forEach(row => {
       const regionName = row.Region?.trim();
@@ -361,12 +373,12 @@ function buildBracketFromCSV(data) {
       const seed2 = row.Seed2?.trim();
       const team2 = row.Team2?.trim();
       
-      if (!regionName || !game || !team1 || !team2) {
-        throw new Error('Missing required fields in CSV');
+      if (!regionName || isNaN(game) || !team1 || !team2) {
+        throw new Error(`Missing required fields in row: ${JSON.stringify(row)}`);
       }
       
-      if (!regions[regionName]) {
-        regions[regionName] = {
+      if (!regionsMap[regionName]) {
+        regionsMap[regionName] = {
           name: regionName,
           round1: []
         };
@@ -376,21 +388,24 @@ function buildBracketFromCSV(data) {
       const teamStr1 = seed1 ? `${seed1} ${team1}` : team1;
       const teamStr2 = seed2 ? `${seed2} ${team2}` : team2;
       
-      regions[regionName].round1.push([teamStr1, teamStr2]);
+      regionsMap[regionName].round1.push([teamStr1, teamStr2]);
     });
     
     // Convert to array and validate
-    const regionArray = Object.values(regions);
+    const regionArray = Object.values(regionsMap);
     
     if (regionArray.length !== 4) {
-      throw new Error('Must have exactly 4 regions');
+      throw new Error(`Must have exactly 4 regions, found ${regionArray.length}`);
     }
     
     regionArray.forEach(region => {
       if (region.round1.length !== 8) {
-        throw new Error(`Region ${region.name} must have exactly 8 games (16 teams)`);
+        throw new Error(`Region "${region.name}" must have exactly 8 games (16 teams), found ${region.round1.length} games`);
       }
     });
+    
+    // Sort regions to ensure consistent order (optional, but helps with debugging)
+    // You can remove this if you want regions in CSV order
     
     return { regions: regionArray };
     
@@ -483,7 +498,8 @@ function buildControls() {
 }
 
 function populateRound1() {
-  const regionNames = ['south', 'midwest', 'east', 'west'];
+  // Get region names dynamically
+  const regionNames = masterBracket.regions.map(r => r.name.toLowerCase().replace(/\s+/g, ''));
   
   regionNames.forEach((region, rIdx) => {
     for (let g = 1; g <= 8; g++) {
@@ -820,7 +836,8 @@ function scoreBracket(picks, results) {
   
   if (picks.regions) {
     picks.regions.forEach((region, rIdx) => {
-      const regionName = ['south', 'midwest', 'east', 'west'][rIdx];
+      // Use the region name from the bracket (could be custom)
+      const regionName = region.name ? region.name.toLowerCase().replace(/\s+/g, '') : ['south', 'midwest', 'east', 'west'][rIdx];
       
       ['round1', 'round2', 'round3', 'round4'].forEach(round => {
         const roundData = region[round];
@@ -875,11 +892,18 @@ function scoreBracket(picks, results) {
           breakdown.bonus += 5;
         }
       } else {
-        const regionIdx = ['south', 'midwest', 'east', 'west'].indexOf(region);
-        const pick = picks.regions?.[regionIdx]?.[round]?.[game]?.pick;
-        if (pick === results.winners[bonusGame]) {
-          total += 5;
-          breakdown.bonus += 5;
+        // Find the region by matching the normalized name
+        const regionIdx = picks.regions.findIndex(r => {
+          const rName = r.name ? r.name.toLowerCase().replace(/\s+/g, '') : '';
+          return rName === region;
+        });
+        
+        if (regionIdx !== -1) {
+          const pick = picks.regions[regionIdx]?.[round]?.[game]?.pick;
+          if (pick === results.winners[bonusGame]) {
+            total += 5;
+            breakdown.bonus += 5;
+          }
         }
       }
     });
