@@ -336,23 +336,36 @@ uploadBtn.onclick = async () => {
       return;
     }
     
-    // Save to Firebase
+    console.log('Saving bracket to Firebase:', newBracket);
+    
+    // Save to Firebase - regions is already in Firebase-friendly format
     await setDoc(doc(db, 'bracketSetup', 'current'), {
       regions: newBracket.regions,
       updatedAt: new Date(),
       updatedBy: auth.currentUser.email
     });
     
-    // Update masterBracket
-    masterBracket.regions = newBracket.regions;
+    // Convert back to array format for masterBracket
+    const convertedRegions = newBracket.regions.map(region => ({
+      name: region.name,
+      round1: Object.keys(region.round1)
+        .sort()
+        .map(gameKey => {
+          const game = region.round1[gameKey];
+          return [game.team1, game.team2];
+        })
+    }));
     
-    uploadStatus.textContent = `Success! Bracket updated with ${newBracket.regions.length} regions. Refresh the page to see changes.`;
+    masterBracket.regions = convertedRegions;
+    
+    uploadStatus.textContent = `Success! Bracket updated with ${newBracket.regions.length} regions. Rebuilding controls...`;
     uploadStatus.style.color = 'green';
     
     // Rebuild controls with new teams
     setTimeout(() => {
       buildControls();
-    }, 1000);
+      uploadStatus.textContent += ' Done! Refresh the main bracket page to see changes.';
+    }, 500);
     
   } catch (err) {
     console.error('Upload error:', err);
