@@ -75,7 +75,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script>
-    // Initialize Firebase ONCE for ticker (leaderboard.js module uses its own init)
+    // Initialize Firebase ONCE for ticker
     if (!firebase.apps.length) {
       const firebaseConfig = {
         apiKey: "AIzaSyB27qEP0k2PR8Zz_z_A8KjGcXvxX9OROQA",
@@ -90,9 +90,9 @@
     }
 
     // Load admin ticker messages
-    document.addEventListener('DOMContentLoaded', function() {
-      const db = firebase.firestore();
-      db.collection('adminMessages').doc('ticker').onSnapshot(doc => {
+    const tickerDb = firebase.firestore();
+    tickerDb.collection('adminMessages').doc('ticker').onSnapshot(doc => {
+      try {
         const tickerContent = document.getElementById('tickerContent');
         const adminTicker = document.getElementById('adminTicker');
         
@@ -101,13 +101,10 @@
           const messages = data.messages || [];
           
           if (messages.length > 0) {
-            // Build ticker HTML with multiple messages
             let tickerHTML = '';
             messages.forEach(msg => {
               tickerHTML += `<span class="ticker-item">${msg}</span>`;
             });
-            
-            // Duplicate for seamless loop
             tickerContent.innerHTML = tickerHTML + tickerHTML;
             adminTicker.style.display = 'block';
           } else {
@@ -116,9 +113,9 @@
         } else {
           adminTicker.style.display = 'none';
         }
-      }, err => {
-        console.log('Ticker not configured yet');
-      });
+      } catch (err) {
+        console.log('Ticker not configured:', err);
+      }
     });
   </script>
   <script type="module" src="leaderboard.js"></script>
