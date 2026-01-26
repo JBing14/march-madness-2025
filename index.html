@@ -17,6 +17,15 @@
         </div>
     </header>
 
+    <!-- ADMIN MESSAGE TICKER -->
+    <div id="adminTicker" class="admin-ticker" style="display:none;">
+        <div class="ticker-wrap">
+            <div class="ticker-content" id="tickerContent">
+                <span class="ticker-item">Loading announcements...</span>
+            </div>
+        </div>
+    </div>
+
     <nav><a href="index.html">Submit Bracket</a> | <a href="leaderboard.html">Leaderboard</a> | <a href="rules.html">Rules & Payments</a> | <a href="admin.html" class="subtle">Admin</a></nav>
 
     <section id="user-form">
@@ -68,6 +77,32 @@
             measurementId: "G-TKTZB2FFRB"
         };
         firebase.initializeApp(firebaseConfig);
+
+        // Load admin ticker messages
+        const db = firebase.firestore();
+        db.collection('adminMessages').doc('ticker').onSnapshot(doc => {
+            if (doc.exists && doc.data().enabled) {
+                const data = doc.data();
+                const messages = data.messages || [];
+                
+                if (messages.length > 0) {
+                    const tickerContent = document.getElementById('tickerContent');
+                    const adminTicker = document.getElementById('adminTicker');
+                    
+                    // Build ticker HTML with multiple messages
+                    let tickerHTML = '';
+                    messages.forEach(msg => {
+                        tickerHTML += `<span class="ticker-item">${msg}</span>`;
+                    });
+                    
+                    // Duplicate for seamless loop
+                    tickerContent.innerHTML = tickerHTML + tickerHTML;
+                    adminTicker.style.display = 'block';
+                }
+            } else {
+                document.getElementById('adminTicker').style.display = 'none';
+            }
+        });
     </script>
     <script src="script.js"></script>
 </body>
