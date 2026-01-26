@@ -469,9 +469,11 @@ async function loadOutlinedBoxes() {
     if (resultsDoc.exists && resultsDoc.data().outlinedBoxes) {
       outlinedBoxes = resultsDoc.data().outlinedBoxes;
       console.log('Loaded outlined boxes:', outlinedBoxes);
+    } else {
+      console.log('No outlined boxes document found');
     }
   } catch (err) {
-    console.log('No outlined boxes configured');
+    console.error('Error loading outlined boxes:', err);
   }
 }
 
@@ -479,10 +481,17 @@ async function loadOutlinedBoxes() {
 function isSlotOutlined(regionIdx, round, gameIdx, slotIdx) {
   const regionName = ['south', 'midwest', 'east', 'west'][regionIdx];
   const boxId = `${regionName}-${round}-game${gameIdx + 1}-slot${slotIdx + 1}`;
-  return outlinedBoxes.includes(boxId);
+  const isOutlined = outlinedBoxes.includes(boxId);
+  
+  if (isOutlined) {
+    console.log('Found outlined box:', boxId);
+  }
+  
+  return isOutlined;
 }
 
-// Load outlined boxes on page load
-loadOutlinedBoxes().then(() => renderBracket());
-
-renderBracket();
+// Load outlined boxes on page load and render
+loadOutlinedBoxes().then(() => {
+  console.log('Starting render with outlined boxes:', outlinedBoxes);
+  renderBracket();
+});
