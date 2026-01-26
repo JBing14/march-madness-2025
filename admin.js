@@ -115,13 +115,8 @@ onAuthStateChanged(auth, user => {
 
 loginBtn.onclick = async () => {
   console.log('Login button clicked');
-  console.log('Email:', emailInput.value);
-  console.log('Password length:', passwordInput.value.length);
-  
   try {
-    console.log('Attempting sign in...');
     await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-    console.log('Sign in successful');
     loginError.textContent = '';
   } catch (err) {
     console.error('Login error:', err);
@@ -131,7 +126,6 @@ loginBtn.onclick = async () => {
 
 logoutBtn.onclick = () => signOut(auth);
 
-// Build controls for official results
 function buildControls() {
   resultsControls.innerHTML = '';
   const regionNames = ['south', 'midwest', 'east', 'west'];
@@ -153,7 +147,6 @@ function buildControls() {
         sel.dataset.gamenum = g;
         sel.innerHTML = `<option value="">${round.toUpperCase()} Game ${g}</option>`;
         
-        // Add change listener to auto-populate downstream
         sel.onchange = () => {
           handleWinnerSelection(region, round, g, sel.value);
           updateDownstreamDropdowns();
@@ -166,7 +159,6 @@ function buildControls() {
     resultsControls.appendChild(regionDiv);
   });
 
-  // Final Four
   const ffDiv = document.createElement('div');
   ffDiv.className = 'col-md-12 mt-3';
   ffDiv.innerHTML = `<h4 style="color: #003087;">Final Four & Championship</h4>`;
@@ -175,20 +167,35 @@ function buildControls() {
   semis1Sel.className = 'form-select mb-2';
   semis1Sel.dataset.game = 'semis1-game1';
   semis1Sel.innerHTML = `<option value="">Semi 1 (South vs Midwest)</option>`;
-  semis1Sel.onchange = () => updateDownstreamDropdowns();
+  semis1Sel.onchange = () => {
+    if (semis1Sel.value) {
+      officialResults.winners['semis1-game1'] = semis1Sel.value;
+    }
+    updateDownstreamDropdowns();
+  };
   ffDiv.appendChild(semis1Sel);
   
   const semis2Sel = document.createElement('select');
   semis2Sel.className = 'form-select mb-2';
   semis2Sel.dataset.game = 'semis2-game1';
   semis2Sel.innerHTML = `<option value="">Semi 2 (East vs West)</option>`;
-  semis2Sel.onchange = () => updateDownstreamDropdowns();
+  semis2Sel.onchange = () => {
+    if (semis2Sel.value) {
+      officialResults.winners['semis2-game1'] = semis2Sel.value;
+    }
+    updateDownstreamDropdowns();
+  };
   ffDiv.appendChild(semis2Sel);
   
   const champSel = document.createElement('select');
   champSel.className = 'form-select mb-2';
   champSel.dataset.game = 'championship-game1';
   champSel.innerHTML = `<option value="">Championship</option>`;
+  champSel.onchange = () => {
+    if (champSel.value) {
+      officialResults.winners['championship-game1'] = champSel.value;
+    }
+  };
   ffDiv.appendChild(champSel);
   
   resultsControls.appendChild(ffDiv);
@@ -199,14 +206,13 @@ function buildControls() {
 }
 
 function populateRound1() {
-  // Populate Round 1 with actual teams from master bracket
   const regionNames = ['south', 'midwest', 'east', 'west'];
   
   regionNames.forEach((region, rIdx) => {
     for (let g = 1; g <= 8; g++) {
       const sel = document.querySelector(`[data-game="${region}-round1-game${g}"]`);
       if (!sel) {
-        return; // Changed from continue to return
+        return;
       }
       
       const teams = masterBracket.regions[rIdx].round1[g - 1];
@@ -223,7 +229,6 @@ function populateRound1() {
 }
 
 function handleWinnerSelection(region, round, gameNum, winner) {
-  // Store the winner
   const gameKey = `${region}-${round}-game${gameNum}`;
   if (winner) {
     officialResults.winners[gameKey] = winner;
@@ -233,14 +238,15 @@ function handleWinnerSelection(region, round, gameNum, winner) {
 function updateDownstreamDropdowns() {
   const regionNames = ['south', 'midwest', 'east', 'west'];
   
-  // Update Round 2 based on Round 1 winners
-  regionNames.forEach((region, rIdx) => {
+  // Update Round 2
+  for (let rIdx = 0; rIdx < regionNames.length; rIdx++) {
+    const region = regionNames[rIdx];
     for (let g = 1; g <= 4; g++) {
       const sel = document.querySelector(`[data-game="${region}-round2-game${g}"]`);
-      if (!sel) return;
+      if (!sel) {
+        break;
+      }
       
-      // Round 2 Game 1 = winners of R1 Games 1 & 2
-      // Round 2 Game 2 = winners of R1 Games 3 & 4, etc.
       const r1Game1 = (g - 1) * 2 + 1;
       const r1Game2 = (g - 1) * 2 + 2;
       
@@ -258,13 +264,16 @@ function updateDownstreamDropdowns() {
         sel.value = currentValue;
       }
     }
-  });
+  }
   
-  // Update Round 3 based on Round 2 winners
-  regionNames.forEach((region, rIdx) => {
+  // Update Round 3
+  for (let rIdx = 0; rIdx < regionNames.length; rIdx++) {
+    const region = regionNames[rIdx];
     for (let g = 1; g <= 2; g++) {
       const sel = document.querySelector(`[data-game="${region}-round3-game${g}"]`);
-      if (!sel) return;
+      if (!sel) {
+        break;
+      }
       
       const r2Game1 = (g - 1) * 2 + 1;
       const r2Game2 = (g - 1) * 2 + 2;
@@ -283,12 +292,15 @@ function updateDownstreamDropdowns() {
         sel.value = currentValue;
       }
     }
-  });
+  }
   
-  // Update Round 4 (Elite Eight) based on Round 3 winners
-  regionNames.forEach((region, rIdx) => {
+  // Update Round 4
+  for (let rIdx = 0; rIdx < regionNames.length; rIdx++) {
+    const region = regionNames[rIdx];
     const sel = document.querySelector(`[data-game="${region}-round4-game1"]`);
-    if (!sel) return;
+    if (!sel) {
+      break;
+    }
     
     const winner1 = officialResults.winners[`${region}-round3-game1`];
     const winner2 = officialResults.winners[`${region}-round3-game2`];
@@ -303,9 +315,9 @@ function updateDownstreamDropdowns() {
     if (currentValue && (currentValue === winner1 || currentValue === winner2)) {
       sel.value = currentValue;
     }
-  });
+  }
   
-  // Update Semis 1 (South vs Midwest)
+  // Update Semis 1
   const semis1Sel = document.querySelector('[data-game="semis1-game1"]');
   if (semis1Sel) {
     const southWinner = officialResults.winners['south-round4-game1'];
@@ -322,7 +334,7 @@ function updateDownstreamDropdowns() {
     }
   }
   
-  // Update Semis 2 (East vs West)
+  // Update Semis 2
   const semis2Sel = document.querySelector('[data-game="semis2-game1"]');
   if (semis2Sel) {
     const eastWinner = officialResults.winners['east-round4-game1'];
@@ -400,7 +412,6 @@ function populateResultsControls(results) {
       if (sel) {
         sel.value = results.winners[gameKey];
         
-        // Trigger onchange to update officialResults object
         const [region, round, game] = gameKey.split('-');
         if (round && game) {
           const gameNum = parseInt(game.replace('game', ''));
