@@ -833,7 +833,7 @@ pre {
 
 .ticker-content {
   display: flex;
-  animation: scroll-ticker 18s linear infinite;
+  animation: scroll-ticker 20s linear infinite;
   white-space: nowrap;
 }
 
@@ -979,4 +979,5 @@ pre {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
 }
+
 
