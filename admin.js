@@ -563,9 +563,30 @@ function updateDownstreamDropdowns() {
 function buildBonusSelects() {
   const regionNames = ['south', 'midwest', 'east', 'west'];
   
+  // Build bonus game selects
   ['bonus1', 'bonus2', 'bonus3', 'bonus4'].forEach(b => {
     const sel = document.getElementById(b);
     sel.innerHTML = '<option value="">Select Bonus Game</option>';
+    
+    regionNames.forEach(r => {
+      ['round1', 'round2', 'round3', 'round4'].forEach(round => {
+        const num = round === 'round1' ? 8 : round === 'round2' ? 4 : round === 'round3' ? 2 : 1;
+        
+        for (let g = 1; g <= num; g++) {
+          sel.innerHTML += `<option value="${r}-${round}-game${g}">${r.toUpperCase()} ${round.toUpperCase()} Game ${g}</option>`;
+        }
+      });
+    });
+    
+    sel.innerHTML += `<option value="semis1-game1">SEMI 1 (South vs Midwest)</option>`;
+    sel.innerHTML += `<option value="semis2-game1">SEMI 2 (East vs West)</option>`;
+    sel.innerHTML += `<option value="championship-game1">CHAMPIONSHIP</option>`;
+  });
+  
+  // Build outlined game selects (same options)
+  ['outlined1', 'outlined2', 'outlined3', 'outlined4'].forEach(o => {
+    const sel = document.getElementById(o);
+    sel.innerHTML = '<option value="">Select Game to Outline</option>';
     
     regionNames.forEach(r => {
       ['round1', 'round2', 'round3', 'round4'].forEach(round => {
@@ -621,12 +642,22 @@ function populateResultsControls(results) {
     });
   }
   
+  if (results.outlinedGames) {
+    Object.keys(results.outlinedGames).forEach(outlinedKey => {
+      const sel = document.getElementById(outlinedKey);
+      if (sel) {
+        sel.value = results.outlinedGames[outlinedKey];
+      }
+    });
+  }
+  
   updateDownstreamDropdowns();
 }
 
 saveResultsBtn.onclick = async () => {
   const winners = {};
   const bonusGames = {};
+  const outlinedGames = {};
   
   document.querySelectorAll('#resultsControls select').forEach(sel => {
     const gameKey = sel.dataset.game;
@@ -642,14 +673,22 @@ saveResultsBtn.onclick = async () => {
     }
   });
   
+  ['outlined1', 'outlined2', 'outlined3', 'outlined4'].forEach(o => {
+    const sel = document.getElementById(o);
+    if (sel.value) {
+      outlinedGames[o] = sel.value;
+    }
+  });
+  
   try {
     await setDoc(doc(db, 'officialResults', 'current'), {
       winners,
       bonusGames,
+      outlinedGames,
       updatedAt: new Date()
     });
     
-    officialResults = { winners, bonusGames };
+    officialResults = { winners, bonusGames, outlinedGames };
     scoreStatus.textContent = 'Results saved! Click "Score All Brackets" to update scores.';
     scoreStatus.style.color = 'green';
   } catch (err) {
@@ -858,7 +897,7 @@ exportPdf.onclick = async () => {
   const scoresSnap = await getDocs(query(collection(db, 'scores'), orderBy('total', 'desc')));
   
   pdf.setFontSize(16);
-  pdf.text('March Madness Leaderboard', 10, 10);
+  pdf.text('March Madness 2025 Leaderboard', 10, 10);
   pdf.setFontSize(10);
   
   let y = 25;
@@ -871,4 +910,3 @@ exportPdf.onclick = async () => {
   
   pdf.save('leaderboard.pdf');
 };
-
