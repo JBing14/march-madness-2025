@@ -493,11 +493,20 @@ async function loadBracketSetup() {
     if (setupDoc.exists && setupDoc.data().regions) {
       const newRegions = setupDoc.data().regions;
       
-      // Update regions with new data
-      regions.forEach((region, idx) => {
-        if (newRegions[idx]) {
-          region.name = newRegions[idx].name;
-          region.round1 = newRegions[idx].round1;
+      // Convert Firebase format back to array format
+      newRegions.forEach((newRegion, idx) => {
+        if (regions[idx]) {
+          regions[idx].name = newRegion.name;
+          
+          // Convert round1 from object format to array format
+          if (newRegion.round1) {
+            regions[idx].round1 = Object.keys(newRegion.round1)
+              .sort() // Ensure game1, game2, game3... order
+              .map(gameKey => {
+                const game = newRegion.round1[gameKey];
+                return [game.team1, game.team2];
+              });
+          }
         }
       });
       
