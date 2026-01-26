@@ -152,6 +152,9 @@ function renderRegion(roundId, rIdx, roundName) {
       slot.className = 'slot';
       slot.textContent = teams[s] || '';
       
+      // Check if THIS specific slot should be outlined FIRST
+      const shouldBeOutlined = isSlotOutlined(rIdx, roundName, m, s);
+      
       if (teams[s] && !locked) {
         slot.onclick = () => pickRegionRound(rIdx, roundName, m, teams[s]);
         slot.classList.add('clickable');
@@ -159,9 +162,10 @@ function renderRegion(roundId, rIdx, roundName) {
         slot.classList.add('empty');
       }
       
-      // Check if THIS specific slot should be outlined
-      if (isSlotOutlined(rIdx, roundName, m, s) && teams[s]) {
+      // Apply outlined class - do this AFTER other classes
+      if (shouldBeOutlined) {
         slot.classList.add('outlined');
+        console.log('Applied outlined class to slot:', slot.textContent);
       }
       
       matchEl.appendChild(slot);
