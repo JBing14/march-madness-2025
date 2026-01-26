@@ -39,9 +39,9 @@ const cancelEdit = document.getElementById('cancelEdit');
 
 let currentEditId = null;
 let allBrackets = [];
-let officialResults = null;
+let officialResults = { winners: {}, bonusGames: {} };
 
-// Master bracket structure (same as script.js)
+// Master bracket structure
 const masterBracket = {
   regions: [
     {
@@ -113,7 +113,6 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// Login
 loginBtn.onclick = async () => {
   try {
     await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
@@ -123,7 +122,6 @@ loginBtn.onclick = async () => {
   }
 };
 
-// Logout
 logoutBtn.onclick = () => signOut(auth);
 
 // Build controls for official results
@@ -148,8 +146,11 @@ function buildControls() {
         sel.dataset.gamenum = g;
         sel.innerHTML = `<option value="">${round.toUpperCase()} Game ${g}</option>`;
         
-        // Populate with the two teams for this game
-        populateGameSelect(sel, rIdx, round, g - 1);
+        // Add change listener to auto-populate downstream
+        sel.onchange = () => {
+          handleWinnerSelection(region, round, g, sel.value);
+          updateDownstreamDropdowns();
+        };
         
         regionDiv.appendChild(sel);
       }
@@ -167,12 +168,14 @@ function buildControls() {
   semis1Sel.className = 'form-select mb-2';
   semis1Sel.dataset.game = 'semis1-game1';
   semis1Sel.innerHTML = `<option value="">Semi 1 (South vs Midwest)</option>`;
+  semis1Sel.onchange = () => updateDownstreamDropdowns();
   ffDiv.appendChild(semis1Sel);
   
   const semis2Sel = document.createElement('select');
   semis2Sel.className = 'form-select mb-2';
   semis2Sel.dataset.game = 'semis2-game1';
   semis2Sel.innerHTML = `<option value="">Semi 2 (East vs West)</option>`;
+  semis2Sel.onchange = () => updateDownstreamDropdowns();
   ffDiv.appendChild(semis2Sel);
   
   const champSel = document.createElement('select');
@@ -183,115 +186,166 @@ function buildControls() {
   
   resultsControls.appendChild(ffDiv);
 
-  // Bonus games - all games from all rounds
   buildBonusSelects();
+  populateRound1();
+  updateDownstreamDropdowns();
 }
 
-function populateGameSelect(select, regionIdx, round, gameIdx) {
-  let teams = [];
+function populateRound1() {
+  // Populate Round 1 with actual teams from master bracket
+  const regionNames = ['south', 'midwest', 'east', 'west'];
   
-  if (round === 'round1') {
-    // Get teams from master bracket
-    teams = masterBracket.regions[regionIdx].round1[gameIdx];
-  } else {
-    // For later rounds, we need to look at user brackets to see possible matchups
-    // For now, we'll populate after brackets are loaded
-    teams = ['TBD', 'TBD'];
-  }
-  
-  if (teams && teams.length === 2) {
-    select.innerHTML += `<option value="${teams[0]}">${teams[0]}</option>`;
-    select.innerHTML += `<option value="${teams[1]}">${teams[1]}</option>`;
-  }
-}
-
-function populateAllGameSelects() {
-  // Populate later round selects with teams from user brackets
-  if (allBrackets.length === 0) return;
-  
-  document.querySelectorAll('#resultsControls select').forEach(sel => {
-    const gameKey = sel.dataset.game;
-    const regionIdx = parseInt(sel.dataset.region);
-    const round = sel.dataset.round;
-    const gameNum = parseInt(sel.dataset.gamenum) - 1;
-    
-    if (!round || round === 'round1') return; // Already populated
-    
-    // Collect all possible teams for this game from all brackets
-    const teamsSet = new Set();
-    
-    allBrackets.forEach(bracket => {
-      if (bracket.picks && bracket.picks.regions && bracket.picks.regions[regionIdx]) {
-        const roundData = bracket.picks.regions[regionIdx][round];
-        const gameKey = `game${gameNum + 1}`;
+  regionNames.forEach((region, rIdx) => {
+    for (let g = 1; g <= 8; g++) {
+      const sel = document.querySelector(`[data-game="${region}-round1-game${g}"]`);
+      if (sel) {
+        const teams = masterBracket.regions[rIdx].round1[g - 1];
+        const currentValue = sel.value;
+        const label = sel.querySelector('option').textContent;
         
-        if (roundData && roundData[gameKey]) {
-          if (roundData[gameKey].slot1) teamsSet.add(roundData[gameKey].slot1);
-          if (roundData[gameKey].slot2) teamsSet.add(roundData[gameKey].slot2);
-        }
+        sel.innerHTML = `<option value="">${label}</option>`;
+        sel.innerHTML += `<option value="${teams[0]}">${teams[0]}</option>`;
+        sel.innerHTML += `<option value="${teams[1]}">${teams[1]}</option>`;
+        
+        if (currentValue) sel.value = currentValue;
       }
-    });
+    }
+  });
+}
+
+function handleWinnerSelection(region, round, gameNum, winner) {
+  // Store the winner
+  const gameKey = `${region}-${round}-game${gameNum}`;
+  if (winner) {
+    officialResults.winners[gameKey] = winner;
+  }
+}
+
+function updateDownstreamDropdowns() {
+  const regionNames = ['south', 'midwest', 'east', 'west'];
+  
+  // Update Round 2 based on Round 1 winners
+  regionNames.forEach((region, rIdx) => {
+    for (let g = 1; g <= 4; g++) {
+      const sel = document.querySelector(`[data-game="${region}-round2-game${g}"]`);
+      if (!sel) continue;
+      
+      // Round 2 Game 1 = winners of R1 Games 1 & 2
+      // Round 2 Game 2 = winners of R1 Games 3 & 4, etc.
+      const r1Game1 = (g - 1) * 2 + 1;
+      const r1Game2 = (g - 1) * 2 + 2;
+      
+      const winner1 = officialResults.winners[`${region}-round1-game${r1Game1}`];
+      const winner2 = officialResults.winners[`${region}-round1-game${r1Game2}`];
+      
+      const currentValue = sel.value;
+      const label = sel.querySelector('option').textContent;
+      sel.innerHTML = `<option value="">${label}</option>`;
+      
+      if (winner1) sel.innerHTML += `<option value="${winner1}">${winner1}</option>`;
+      if (winner2) sel.innerHTML += `<option value="${winner2}">${winner2}</option>`;
+      
+      if (currentValue && (currentValue === winner1 || currentValue === winner2)) {
+        sel.value = currentValue;
+      }
+    }
+  });
+  
+  // Update Round 3 based on Round 2 winners
+  regionNames.forEach((region, rIdx) => {
+    for (let g = 1; g <= 2; g++) {
+      const sel = document.querySelector(`[data-game="${region}-round3-game${g}"]`);
+      if (!sel) continue;
+      
+      const r2Game1 = (g - 1) * 2 + 1;
+      const r2Game2 = (g - 1) * 2 + 2;
+      
+      const winner1 = officialResults.winners[`${region}-round2-game${r2Game1}`];
+      const winner2 = officialResults.winners[`${region}-round2-game${r2Game2}`];
+      
+      const currentValue = sel.value;
+      const label = sel.querySelector('option').textContent;
+      sel.innerHTML = `<option value="">${label}</option>`;
+      
+      if (winner1) sel.innerHTML += `<option value="${winner1}">${winner1}</option>`;
+      if (winner2) sel.innerHTML += `<option value="${winner2}">${winner2}</option>`;
+      
+      if (currentValue && (currentValue === winner1 || currentValue === winner2)) {
+        sel.value = currentValue;
+      }
+    }
+  });
+  
+  // Update Round 4 (Elite Eight) based on Round 3 winners
+  regionNames.forEach((region, rIdx) => {
+    const sel = document.querySelector(`[data-game="${region}-round4-game1"]`);
+    if (!sel) continue;
     
-    // Update select with actual teams
+    const winner1 = officialResults.winners[`${region}-round3-game1`];
+    const winner2 = officialResults.winners[`${region}-round3-game2`];
+    
     const currentValue = sel.value;
     const label = sel.querySelector('option').textContent;
     sel.innerHTML = `<option value="">${label}</option>`;
     
-    teamsSet.forEach(team => {
-      sel.innerHTML += `<option value="${team}">${team}</option>`;
-    });
+    if (winner1) sel.innerHTML += `<option value="${winner1}">${winner1}</option>`;
+    if (winner2) sel.innerHTML += `<option value="${winner2}">${winner2}</option>`;
     
-    if (currentValue) sel.value = currentValue;
+    if (currentValue && (currentValue === winner1 || currentValue === winner2)) {
+      sel.value = currentValue;
+    }
   });
   
-  // Populate Final Four selects
-  populateFinalFourSelects();
-}
-
-function populateFinalFourSelects() {
-  if (allBrackets.length === 0) return;
-  
-  // Semis 1
+  // Update Semis 1 (South vs Midwest)
   const semis1Sel = document.querySelector('[data-game="semis1-game1"]');
-  const semis1Teams = new Set();
-  allBrackets.forEach(b => {
-    if (b.picks?.finalFour?.semis1?.game1) {
-      if (b.picks.finalFour.semis1.game1.slot1) semis1Teams.add(b.picks.finalFour.semis1.game1.slot1);
-      if (b.picks.finalFour.semis1.game1.slot2) semis1Teams.add(b.picks.finalFour.semis1.game1.slot2);
+  if (semis1Sel) {
+    const southWinner = officialResults.winners['south-round4-game1'];
+    const midwestWinner = officialResults.winners['midwest-round4-game1'];
+    
+    const currentValue = semis1Sel.value;
+    semis1Sel.innerHTML = `<option value="">Semi 1 (South vs Midwest)</option>`;
+    
+    if (southWinner) semis1Sel.innerHTML += `<option value="${southWinner}">${southWinner}</option>`;
+    if (midwestWinner) semis1Sel.innerHTML += `<option value="${midwestWinner}">${midwestWinner}</option>`;
+    
+    if (currentValue && (currentValue === southWinner || currentValue === midwestWinner)) {
+      semis1Sel.value = currentValue;
     }
-  });
-  const semis1Value = semis1Sel.value;
-  semis1Sel.innerHTML = `<option value="">Semi 1 (South vs Midwest)</option>`;
-  semis1Teams.forEach(t => semis1Sel.innerHTML += `<option value="${t}">${t}</option>`);
-  if (semis1Value) semis1Sel.value = semis1Value;
+  }
   
-  // Semis 2
+  // Update Semis 2 (East vs West)
   const semis2Sel = document.querySelector('[data-game="semis2-game1"]');
-  const semis2Teams = new Set();
-  allBrackets.forEach(b => {
-    if (b.picks?.finalFour?.semis2?.game1) {
-      if (b.picks.finalFour.semis2.game1.slot1) semis2Teams.add(b.picks.finalFour.semis2.game1.slot1);
-      if (b.picks.finalFour.semis2.game1.slot2) semis2Teams.add(b.picks.finalFour.semis2.game1.slot2);
+  if (semis2Sel) {
+    const eastWinner = officialResults.winners['east-round4-game1'];
+    const westWinner = officialResults.winners['west-round4-game1'];
+    
+    const currentValue = semis2Sel.value;
+    semis2Sel.innerHTML = `<option value="">Semi 2 (East vs West)</option>`;
+    
+    if (eastWinner) semis2Sel.innerHTML += `<option value="${eastWinner}">${eastWinner}</option>`;
+    if (westWinner) semis2Sel.innerHTML += `<option value="${westWinner}">${westWinner}</option>`;
+    
+    if (currentValue && (currentValue === eastWinner || currentValue === westWinner)) {
+      semis2Sel.value = currentValue;
     }
-  });
-  const semis2Value = semis2Sel.value;
-  semis2Sel.innerHTML = `<option value="">Semi 2 (East vs West)</option>`;
-  semis2Teams.forEach(t => semis2Sel.innerHTML += `<option value="${t}">${t}</option>`);
-  if (semis2Value) semis2Sel.value = semis2Value;
+  }
   
-  // Championship
+  // Update Championship
   const champSel = document.querySelector('[data-game="championship-game1"]');
-  const champTeams = new Set();
-  allBrackets.forEach(b => {
-    if (b.picks?.finalFour?.championship?.game1) {
-      if (b.picks.finalFour.championship.game1.slot1) champTeams.add(b.picks.finalFour.championship.game1.slot1);
-      if (b.picks.finalFour.championship.game1.slot2) champTeams.add(b.picks.finalFour.championship.game1.slot2);
+  if (champSel) {
+    const semis1Winner = officialResults.winners['semis1-game1'];
+    const semis2Winner = officialResults.winners['semis2-game1'];
+    
+    const currentValue = champSel.value;
+    champSel.innerHTML = `<option value="">Championship</option>`;
+    
+    if (semis1Winner) champSel.innerHTML += `<option value="${semis1Winner}">${semis1Winner}</option>`;
+    if (semis2Winner) champSel.innerHTML += `<option value="${semis2Winner}">${semis2Winner}</option>`;
+    
+    if (currentValue && (currentValue === semis1Winner || currentValue === semis2Winner)) {
+      champSel.value = currentValue;
     }
-  });
-  const champValue = champSel.value;
-  champSel.innerHTML = `<option value="">Championship</option>`;
-  champTeams.forEach(t => champSel.innerHTML += `<option value="${t}">${t}</option>`);
-  if (champValue) champSel.value = champValue;
+  }
 }
 
 function buildBonusSelects() {
@@ -311,38 +365,42 @@ function buildBonusSelects() {
       });
     });
     
-    // Add Final Four games
     sel.innerHTML += `<option value="semis1-game1">SEMI 1 (South vs Midwest)</option>`;
     sel.innerHTML += `<option value="semis2-game1">SEMI 2 (East vs West)</option>`;
     sel.innerHTML += `<option value="championship-game1">CHAMPIONSHIP</option>`;
   });
 }
 
-// Load official results
 async function loadOfficialResults() {
   const resultsDoc = await getDoc(doc(db, 'officialResults', 'current'));
   
   if (resultsDoc.exists()) {
     officialResults = resultsDoc.data();
     populateResultsControls(officialResults);
+  } else {
+    officialResults = { winners: {}, bonusGames: {} };
   }
 }
 
-// Populate results controls with existing data
 function populateResultsControls(results) {
   if (!results) return;
   
-  // Populate winner selects
   if (results.winners) {
     Object.keys(results.winners).forEach(gameKey => {
       const sel = document.querySelector(`[data-game="${gameKey}"]`);
       if (sel) {
         sel.value = results.winners[gameKey];
+        
+        // Trigger onchange to update officialResults object
+        const [region, round, game] = gameKey.split('-');
+        if (round && game) {
+          const gameNum = parseInt(game.replace('game', ''));
+          handleWinnerSelection(region, round, gameNum, results.winners[gameKey]);
+        }
       }
     });
   }
   
-  // Populate bonus game selects
   if (results.bonusGames) {
     Object.keys(results.bonusGames).forEach(bonusKey => {
       const sel = document.getElementById(bonusKey);
@@ -351,14 +409,14 @@ function populateResultsControls(results) {
       }
     });
   }
+  
+  updateDownstreamDropdowns();
 }
 
-// Save official results
 saveResultsBtn.onclick = async () => {
   const winners = {};
   const bonusGames = {};
   
-  // Collect all winner selections
   document.querySelectorAll('#resultsControls select').forEach(sel => {
     const gameKey = sel.dataset.game;
     if (sel.value) {
@@ -366,7 +424,6 @@ saveResultsBtn.onclick = async () => {
     }
   });
   
-  // Collect bonus game selections
   ['bonus1', 'bonus2', 'bonus3', 'bonus4'].forEach(b => {
     const sel = document.getElementById(b);
     if (sel.value) {
@@ -382,17 +439,16 @@ saveResultsBtn.onclick = async () => {
     });
     
     officialResults = { winners, bonusGames };
-    scoreStatus.textContent = 'Official results saved successfully! Now click "Score All Brackets" to update scores.';
+    scoreStatus.textContent = 'Results saved! Click "Score All Brackets" to update scores.';
     scoreStatus.style.color = 'green';
   } catch (err) {
-    scoreStatus.textContent = 'Error saving results: ' + err.message;
+    scoreStatus.textContent = 'Error: ' + err.message;
     scoreStatus.style.color = 'red';
   }
 };
 
-// Score all brackets
 scoreBtn.onclick = async () => {
-  if (!officialResults || !officialResults.winners) {
+  if (!officialResults || !officialResults.winners || Object.keys(officialResults.winners).length === 0) {
     scoreStatus.textContent = 'Please save official results first!';
     scoreStatus.style.color = 'red';
     return;
@@ -418,22 +474,20 @@ scoreBtn.onclick = async () => {
       scoredCount++;
     }
     
-    scoreStatus.textContent = `Successfully scored ${scoredCount} brackets! Check the leaderboard page to see results.`;
+    scoreStatus.textContent = `Scored ${scoredCount} brackets! Check leaderboard.`;
     scoreStatus.style.color = 'green';
   } catch (err) {
-    scoreStatus.textContent = 'Error scoring brackets: ' + err.message;
+    scoreStatus.textContent = 'Error: ' + err.message;
     scoreStatus.style.color = 'red';
   }
 };
 
-// Scoring function
 function scoreBracket(picks, results) {
   let total = 0;
   const breakdown = { round1: 0, round2: 0, round3: 0, round4: 0, semis: 0, championship: 0, bonus: 0 };
   
   const roundPoints = { round1: 1, round2: 2, round3: 4, round4: 8 };
   
-  // Score regional rounds
   if (picks.regions) {
     picks.regions.forEach((region, rIdx) => {
       const regionName = ['south', 'midwest', 'east', 'west'][rIdx];
@@ -458,35 +512,23 @@ function scoreBracket(picks, results) {
     });
   }
   
-  // Score Final Four
   if (picks.finalFour) {
-    if (picks.finalFour.semis1?.game1?.pick) {
-      const pick = picks.finalFour.semis1.game1.pick;
-      if (pick === results.winners['semis1-game1']) {
-        total += 16;
-        breakdown.semis += 16;
-      }
+    if (picks.finalFour.semis1?.game1?.pick === results.winners['semis1-game1']) {
+      total += 16;
+      breakdown.semis += 16;
     }
     
-    if (picks.finalFour.semis2?.game1?.pick) {
-      const pick = picks.finalFour.semis2.game1.pick;
-      if (pick === results.winners['semis2-game1']) {
-        total += 16;
-        breakdown.semis += 16;
-      }
+    if (picks.finalFour.semis2?.game1?.pick === results.winners['semis2-game1']) {
+      total += 16;
+      breakdown.semis += 16;
     }
     
-    // Score Championship
-    if (picks.finalFour.championship?.game1?.pick) {
-      const pick = picks.finalFour.championship.game1.pick;
-      if (pick === results.winners['championship-game1']) {
-        total += 32;
-        breakdown.championship += 32;
-      }
+    if (picks.finalFour.championship?.game1?.pick === results.winners['championship-game1']) {
+      total += 32;
+      breakdown.championship += 32;
     }
   }
   
-  // Score bonus games
   if (results.bonusGames) {
     ['bonus1', 'bonus2', 'bonus3', 'bonus4'].forEach(bonusKey => {
       const bonusGame = results.bonusGames[bonusKey];
@@ -514,7 +556,6 @@ function scoreBracket(picks, results) {
   return { total, breakdown };
 }
 
-// Load brackets
 function loadBrackets() {
   onSnapshot(query(collection(db, 'brackets'), orderBy('submittedAt', 'desc')), snap => {
     allBrackets = [];
@@ -547,37 +588,28 @@ function loadBrackets() {
     });
     
     countSpan.textContent = allBrackets.length;
-    
-    // Build controls after brackets are loaded
     buildControls();
-    populateAllGameSelects();
     
-    if (officialResults) {
+    if (officialResults && officialResults.winners) {
       populateResultsControls(officialResults);
     }
   });
 }
 
-// Delete bracket
 window.deleteBracket = async (id) => {
-  if (!confirm('Are you sure you want to delete this bracket?')) return;
+  if (!confirm('Delete this bracket?')) return;
   
   try {
     await deleteDoc(doc(db, 'brackets', id));
-    try {
-      await deleteDoc(doc(db, 'scores', id));
-    } catch (e) {
-      // Score might not exist yet
-    }
-    scoreStatus.textContent = 'Bracket deleted successfully!';
+    try { await deleteDoc(doc(db, 'scores', id)); } catch (e) {}
+    scoreStatus.textContent = 'Bracket deleted!';
     scoreStatus.style.color = 'green';
   } catch (err) {
-    scoreStatus.textContent = 'Error deleting bracket: ' + err.message;
+    scoreStatus.textContent = 'Error: ' + err.message;
     scoreStatus.style.color = 'red';
   }
 };
 
-// Edit bracket
 window.editBracket = (id) => {
   const bracket = allBrackets.find(b => b.id === id);
   if (!bracket) return;
@@ -587,62 +619,43 @@ window.editBracket = (id) => {
   editForm.style.display = 'block';
 };
 
-// Save edit
 saveEdit.onclick = async () => {
   if (!currentEditId) return;
   
   try {
-    await updateDoc(doc(db, 'brackets', currentEditId), {
-      entryName: editName.value
-    });
-    
-    try {
-      await updateDoc(doc(db, 'scores', currentEditId), {
-        entryName: editName.value
-      });
-    } catch (e) {
-      // Score might not exist yet
-    }
+    await updateDoc(doc(db, 'brackets', currentEditId), { entryName: editName.value });
+    try { await updateDoc(doc(db, 'scores', currentEditId), { entryName: editName.value }); } catch (e) {}
     
     editForm.style.display = 'none';
     currentEditId = null;
-    scoreStatus.textContent = 'Bracket updated successfully!';
+    scoreStatus.textContent = 'Updated!';
     scoreStatus.style.color = 'green';
   } catch (err) {
-    scoreStatus.textContent = 'Error updating bracket: ' + err.message;
+    scoreStatus.textContent = 'Error: ' + err.message;
     scoreStatus.style.color = 'red';
   }
 };
 
-// Cancel edit
 cancelEdit.onclick = () => {
   editForm.style.display = 'none';
   currentEditId = null;
 };
 
-// Export PDF
 exportPdf.onclick = async () => {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
-  
-  // Get leaderboard data
   const scoresSnap = await getDocs(query(collection(db, 'scores'), orderBy('total', 'desc')));
   
   pdf.setFontSize(16);
   pdf.text('March Madness 2025 Leaderboard', 10, 10);
-  
   pdf.setFontSize(10);
-  let y = 25;
   
+  let y = 25;
   scoresSnap.forEach((d, idx) => {
     const data = d.data();
     pdf.text(`${idx + 1}. ${data.entryName} - ${data.total} pts (Tie: ${data.tiebreaker})`, 10, y);
     y += 8;
-    
-    if (y > 280) {
-      pdf.addPage();
-      y = 20;
-    }
+    if (y > 280) { pdf.addPage(); y = 20; }
   });
   
   pdf.save('leaderboard.pdf');
