@@ -858,7 +858,7 @@ exportPdf.onclick = async () => {
   const scoresSnap = await getDocs(query(collection(db, 'scores'), orderBy('total', 'desc')));
   
   pdf.setFontSize(16);
-  pdf.text('March Madness 2025 Leaderboard', 10, 10);
+  pdf.text('March Madness Leaderboard', 10, 10);
   pdf.setFontSize(10);
   
   let y = 25;
@@ -871,3 +871,4 @@ exportPdf.onclick = async () => {
   
   pdf.save('leaderboard.pdf');
 };
+
