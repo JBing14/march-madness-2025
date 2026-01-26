@@ -1,6 +1,7 @@
 const db = firebase.firestore();
 
 let locked = false;
+let outlinedGames = [];
 
 const regions = [
   {
@@ -146,6 +147,9 @@ function renderRegion(roundId, rIdx, roundName) {
     
     const teams = regions[rIdx][roundName][m];
     
+    // Check if this game should be outlined
+    const shouldOutline = isOutlined(rIdx, roundName, m);
+    
     for (let s = 0; s < 2; s++) {
       const slot = document.createElement('div');
       slot.className = 'slot';
@@ -156,6 +160,11 @@ function renderRegion(roundId, rIdx, roundName) {
         slot.classList.add('clickable');
       } else if (!teams[s]) {
         slot.classList.add('empty');
+      }
+      
+      // Apply outlined class if configured
+      if (shouldOutline && teams[s]) {
+        slot.classList.add('outlined');
       }
       
       matchEl.appendChild(slot);
@@ -455,5 +464,27 @@ document.getElementById('submitBtn').onclick = async () => {
   document.getElementById('confirmation').style.display = 'block';
   renderBracket();
 };
+
+// Load outlined games from Firebase
+async function loadOutlinedGames() {
+  try {
+    const resultsDoc = await db.collection('officialResults').doc('current').get();
+    if (resultsDoc.exists && resultsDoc.data().outlinedGames) {
+      outlinedGames = Object.values(resultsDoc.data().outlinedGames);
+    }
+  } catch (err) {
+    console.log('No outlined games configured');
+  }
+}
+
+// Check if a game should be outlined
+function isOutlined(regionIdx, round, gameIdx) {
+  const regionName = ['south', 'midwest', 'east', 'west'][regionIdx];
+  const gameKey = `${regionName}-${round}-game${gameIdx + 1}`;
+  return outlinedGames.includes(gameKey);
+}
+
+// Load outlined games on page load
+loadOutlinedGames().then(() => renderBracket());
 
 renderBracket();
