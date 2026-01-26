@@ -114,7 +114,7 @@ function renderBracket() {
   renderRegion('round-4-right', 2, 'round4');
   renderRegion('round-4-right', 3, 'round4');
 
-  // Final Four - Combined for proper alignment
+  // Final Four
   renderFinalFour();
 
   // Champion
@@ -210,32 +210,47 @@ function renderFinalFour() {
   }
   rightSemis.appendChild(semis2Match);
 
-  // Render championship on left
-  const champRound = document.getElementById('round-6-left');
-  const champMatch = document.createElement('div');
-  champMatch.className = 'match championship-match';
+  // Render LEFT championship (winner of semis1 - South/Midwest side)
+  const leftChampRound = document.getElementById('round-6-left');
+  const leftChampMatch = document.createElement('div');
+  leftChampMatch.className = 'match championship-match';
   
-  for (let s = 0; s < 2; s++) {
-    const slot = document.createElement('div');
-    slot.className = 'slot';
-    slot.textContent = finalFour.championship[s] || '';
-    
-    if (finalFour.championship[s] && !locked) {
-      slot.onclick = () => pickFinalFour('championship', finalFour.championship[s]);
-      slot.classList.add('clickable');
-    } else if (!finalFour.championship[s]) {
-      slot.classList.add('empty');
-    }
-    
-    champMatch.appendChild(slot);
+  const leftChampSlot = document.createElement('div');
+  leftChampSlot.className = 'slot';
+  leftChampSlot.textContent = finalFour.championship[0] || '';
+  
+  if (finalFour.championship[0] && !locked) {
+    leftChampSlot.onclick = () => pickFinalFour('championship', finalFour.championship[0]);
+    leftChampSlot.classList.add('clickable');
+  } else if (!finalFour.championship[0]) {
+    leftChampSlot.classList.add('empty');
   }
-  champRound.appendChild(champMatch);
+  
+  leftChampMatch.appendChild(leftChampSlot);
+  leftChampRound.appendChild(leftChampMatch);
+
+  // Render RIGHT championship (winner of semis2 - East/West side)
+  const rightChampRound = document.getElementById('round-6-right');
+  const rightChampMatch = document.createElement('div');
+  rightChampMatch.className = 'match championship-match';
+  
+  const rightChampSlot = document.createElement('div');
+  rightChampSlot.className = 'slot';
+  rightChampSlot.textContent = finalFour.championship[1] || '';
+  
+  if (finalFour.championship[1] && !locked) {
+    rightChampSlot.onclick = () => pickFinalFour('championship', finalFour.championship[1]);
+    rightChampSlot.classList.add('clickable');
+  } else if (!finalFour.championship[1]) {
+    rightChampSlot.classList.add('empty');
+  }
+  
+  rightChampMatch.appendChild(rightChampSlot);
+  rightChampRound.appendChild(rightChampMatch);
 }
 
 function pickRegionRound(rIdx, roundName, mIdx, team) {
   if (locked) return;
-  
-  console.log('Picking:', { rIdx, roundName, mIdx, team });
   
   // Record the pick
   picks.regions[rIdx][roundName][`game${mIdx + 1}`] = team;
@@ -268,12 +283,10 @@ function pickRegionRound(rIdx, roundName, mIdx, team) {
 function pickFinalFour(stage, team) {
   if (locked) return;
   
-  console.log('Picking Final Four:', { stage, team });
-  
   picks.finalFour[stage].game1 = team;
   
   if (stage === 'semis1') {
-    // Advance to championship slot 0
+    // Advance to championship slot 0 (left side)
     finalFour.championship[0] = team;
     // Clear champion if needed
     if (finalFour.champion && 
@@ -282,7 +295,7 @@ function pickFinalFour(stage, team) {
       finalFour.champion = '';
     }
   } else if (stage === 'semis2') {
-    // Advance to championship slot 1
+    // Advance to championship slot 1 (right side)
     finalFour.championship[1] = team;
     // Clear champion if needed
     if (finalFour.champion && 
