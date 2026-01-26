@@ -2,6 +2,7 @@ const db = firebase.firestore();
 
 let locked = false;
 let outlinedBoxes = [];
+let bracketLoaded = false;
 
 const regions = [
   {
@@ -427,7 +428,11 @@ function serializeBracket() {
     champion: finalFour.champion
   };
   
-  return { regions: serializedRegions, finalFour: serializedFinalFour };
+  return { 
+    regions: serializedRegions, 
+    finalFour: serializedFinalFour,
+    regionNames: regions.map(r => r.name) // Save region names with submission
+  };
 }
 
 document.getElementById('submitBtn').onclick = async () => {
@@ -481,9 +486,36 @@ async function loadOutlinedBoxes() {
   }
 }
 
+// Load bracket setup from Firebase (teams and region names)
+async function loadBracketSetup() {
+  try {
+    const setupDoc = await db.collection('bracketSetup').doc('current').get();
+    if (setupDoc.exists && setupDoc.data().regions) {
+      const newRegions = setupDoc.data().regions;
+      
+      // Update regions with new data
+      regions.forEach((region, idx) => {
+        if (newRegions[idx]) {
+          region.name = newRegions[idx].name;
+          region.round1 = newRegions[idx].round1;
+        }
+      });
+      
+      console.log('Loaded bracket setup from Firebase:', regions.map(r => r.name));
+      bracketLoaded = true;
+    } else {
+      console.log('No custom bracket setup found, using default');
+      bracketLoaded = true;
+    }
+  } catch (err) {
+    console.error('Error loading bracket setup:', err);
+    bracketLoaded = true;
+  }
+}
+
 // Check if a specific slot should be outlined
 function isSlotOutlined(regionIdx, round, gameIdx, slotIdx) {
-  const regionName = ['south', 'midwest', 'east', 'west'][regionIdx];
+  const regionName = regions[regionIdx].name.toLowerCase().replace(/\s+/g, '');
   const boxId = `${regionName}-${round}-game${gameIdx + 1}-slot${slotIdx + 1}`;
   const isOutlined = outlinedBoxes.includes(boxId);
   
@@ -494,8 +526,9 @@ function isSlotOutlined(regionIdx, round, gameIdx, slotIdx) {
   return isOutlined;
 }
 
-// Load outlined boxes on page load and render
-loadOutlinedBoxes().then(() => {
+// Load everything and then render
+Promise.all([loadBracketSetup(), loadOutlinedBoxes()]).then(() => {
   console.log('Starting render with outlined boxes:', outlinedBoxes);
+  console.log('Region names:', regions.map(r => r.name));
   renderBracket();
 });
