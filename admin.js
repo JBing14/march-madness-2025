@@ -130,21 +130,30 @@ async function loadBracketSetup() {
   try {
     const setupDoc = await getDoc(doc(db, 'bracketSetup', 'current'));
     if (setupDoc.exists()) {
-      const setup = setupDoc.data();
+      const data = setupDoc.data();
       
-      // Convert Firebase format back to array format
-      const convertedRegions = setup.regions.map(region => ({
-        name: region.name,
-        round1: Object.keys(region.round1)
-          .sort() // Ensure game1, game2, game3... order
-          .map(gameKey => {
-            const game = region.round1[gameKey];
-            return [game.team1, game.team2];
-          })
-      }));
+      // Convert flat Firebase structure back to array format
+      const convertedRegions = [];
       
-      masterBracket.regions = convertedRegions;
-      console.log('Loaded bracket setup from Firebase');
+      for (let i = 0; i < 4; i++) {
+        const regionData = data[`region${i}`];
+        if (regionData) {
+          convertedRegions.push({
+            name: regionData.name,
+            round1: Object.keys(regionData.round1)
+              .sort()
+              .map(gameKey => {
+                const game = regionData.round1[gameKey];
+                return [game.team1, game.team2];
+              })
+          });
+        }
+      }
+      
+      if (convertedRegions.length === 4) {
+        masterBracket.regions = convertedRegions;
+        console.log('Loaded bracket setup from Firebase:', masterBracket.regions.map(r => r.name));
+      }
     }
   } catch (err) {
     console.log('No custom bracket setup found, using default');
@@ -304,13 +313,11 @@ uploadBtn.onclick = async () => {
     
     // Check if Excel file
     if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-      // Use SheetJS to parse Excel
       const arrayBuffer = await file.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       csvText = XLSX.utils.sheet_to_csv(firstSheet);
     } else {
-      // Read as CSV
       csvText = await file.text();
     }
     
@@ -327,7 +334,7 @@ uploadBtn.onclick = async () => {
       return;
     }
     
-    // Build bracket structure from CSV
+    // Build bracket structure from CSV (returns Firebase-friendly format)
     const newBracket = buildBracketFromCSV(parsed.data);
     
     if (!newBracket) {
@@ -336,14 +343,34 @@ uploadBtn.onclick = async () => {
       return;
     }
     
-    console.log('Saving bracket to Firebase:', newBracket);
+    console.log('Bracket data to save:', JSON.stringify(newBracket, null, 2));
     
-    // Save to Firebase - regions is already in Firebase-friendly format
-    await setDoc(doc(db, 'bracketSetup', 'current'), {
-      regions: newBracket.regions,
+    // Create a completely flat structure for Firebase
+    const firebaseData = {
+      region0: {
+        name: newBracket.regions[0].name,
+        round1: newBracket.regions[0].round1
+      },
+      region1: {
+        name: newBracket.regions[1].name,
+        round1: newBracket.regions[1].round1
+      },
+      region2: {
+        name: newBracket.regions[2].name,
+        round1: newBracket.regions[2].round1
+      },
+      region3: {
+        name: newBracket.regions[3].name,
+        round1: newBracket.regions[3].round1
+      },
       updatedAt: new Date(),
       updatedBy: auth.currentUser.email
-    });
+    };
+    
+    console.log('Firebase data:', JSON.stringify(firebaseData, null, 2));
+    
+    // Save to Firebase
+    await setDoc(doc(db, 'bracketSetup', 'current'), firebaseData);
     
     // Convert back to array format for masterBracket
     const convertedRegions = newBracket.regions.map(region => ({
