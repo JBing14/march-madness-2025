@@ -119,6 +119,7 @@ onAuthStateChanged(auth, user => {
     loadBracketSetup();
     loadBrackets();
     loadOfficialResults();
+    loadTickerConfig();
   } else {
     loginDiv.style.display = 'block';
     dashboardDiv.style.display = 'none';
@@ -1059,3 +1060,133 @@ exportPdf.onclick = async () => {
   
   pdf.save('leaderboard.pdf');
 };
+
+// ===== ADMIN MESSAGE TICKER MANAGEMENT =====
+
+const tickerEnabled = document.getElementById('tickerEnabled');
+const messageList = document.getElementById('messageList');
+const newMessage = document.getElementById('newMessage');
+const addMessageBtn = document.getElementById('addMessageBtn');
+const saveTickerBtn = document.getElementById('saveTickerBtn');
+const tickerStatus = document.getElementById('tickerStatus');
+const tickerPreview = document.getElementById('tickerPreview');
+const previewText = document.getElementById('previewText');
+
+let currentMessages = [];
+
+// Load existing ticker configuration
+async function loadTickerConfig() {
+  try {
+    const tickerDoc = await getDoc(doc(db, 'adminMessages', 'ticker'));
+    if (tickerDoc.exists()) {
+      const data = tickerDoc.data();
+      tickerEnabled.checked = data.enabled || false;
+      currentMessages = data.messages || [];
+      renderMessageList();
+      updatePreview();
+    }
+  } catch (err) {
+    console.error('Error loading ticker config:', err);
+  }
+}
+
+// Render the message list
+function renderMessageList() {
+  if (currentMessages.length === 0) {
+    messageList.innerHTML = '<li class="text-muted">No messages yet. Add one below!</li>';
+    tickerPreview.style.display = 'none';
+    return;
+  }
+
+  messageList.innerHTML = '';
+  currentMessages.forEach((msg, idx) => {
+    const li = document.createElement('li');
+    li.className = 'message-item';
+    li.innerHTML = `
+      <span class="message-text">${msg}</span>
+      <div class="message-actions">
+        <button class="btn btn-sm btn-danger" onclick="deleteMessage(${idx})">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+    `;
+    messageList.appendChild(li);
+  });
+
+  tickerPreview.style.display = 'block';
+}
+
+// Update preview
+function updatePreview() {
+  if (currentMessages.length > 0) {
+    previewText.textContent = currentMessages.join(' ⚡ ');
+  } else {
+    previewText.textContent = 'Your messages will appear here';
+  }
+}
+
+// Add new message
+addMessageBtn.onclick = () => {
+  const msg = newMessage.value.trim();
+  if (!msg) {
+    alert('Please enter a message!');
+    return;
+  }
+
+  if (currentMessages.length >= 10) {
+    alert('Maximum 10 messages allowed. Delete some before adding more.');
+    return;
+  }
+
+  currentMessages.push(msg);
+  newMessage.value = '';
+  renderMessageList();
+  updatePreview();
+  tickerStatus.textContent = 'Message added! Click "Save & Publish" to update the ticker.';
+  tickerStatus.style.color = 'blue';
+};
+
+// Delete message
+window.deleteMessage = (idx) => {
+  if (confirm('Delete this message?')) {
+    currentMessages.splice(idx, 1);
+    renderMessageList();
+    updatePreview();
+    tickerStatus.textContent = 'Message removed! Click "Save & Publish" to update the ticker.';
+    tickerStatus.style.color = 'blue';
+  }
+};
+
+// Save ticker configuration
+saveTickerBtn.onclick = async () => {
+  tickerStatus.textContent = 'Saving ticker configuration...';
+  tickerStatus.style.color = 'blue';
+
+  try {
+    await setDoc(doc(db, 'adminMessages', 'ticker'), {
+      enabled: tickerEnabled.checked,
+      messages: currentMessages,
+      updatedAt: new Date(),
+      updatedBy: auth.currentUser.email
+    });
+
+    tickerStatus.textContent = tickerEnabled.checked 
+      ? `✅ Ticker published! ${currentMessages.length} messages are now live on the site.`
+      : '✅ Ticker disabled and hidden from public pages.';
+    tickerStatus.style.color = 'green';
+  } catch (err) {
+    console.error('Error saving ticker:', err);
+    tickerStatus.textContent = 'Error: ' + err.message;
+    tickerStatus.style.color = 'red';
+  }
+};
+
+// Enter key to add message
+newMessage.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    addMessageBtn.click();
+  }
+});
+
+// Initialize ticker on auth state change (already done in main auth listener, just add the call)
+// This will be called automatically when user logs in
