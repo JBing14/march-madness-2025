@@ -347,6 +347,37 @@ nav a:hover {
   border-color: #4CAF50;
 }
 
+/* Outlined game - special featured games - HIGHEST PRIORITY */
+.slot.outlined,
+.slot.outlined.clickable,
+.slot.outlined.empty {
+  border: 5px solid #ff0000 !important;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 1) !important;
+  animation: pulse-outline 1.5s infinite !important;
+  position: relative !important;
+  z-index: 100 !important;
+  background: #ffe6e6 !important;
+}
+
+.slot.outlined.clickable:hover {
+  background: #ff0000 !important;
+  color: white !important;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 1) !important;
+}
+
+@keyframes pulse-outline {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 0, 0, 1);
+    border-color: #ff0000;
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 0, 0, 1);
+    border-color: #ff3333;
+    transform: scale(1.02);
+  }
+}
+
 /* Selected state */
 .slot.selected {
   background: #ff6200;
@@ -623,6 +654,48 @@ pre {
 
 .card-body {
   padding: 20px;
+}
+
+/* Footer Styling */
+.site-footer {
+  background: #003087;
+  color: white;
+  text-align: center;
+  padding: 30px 20px;
+  margin-top: 40px;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.site-footer a {
+  color: #FFD700;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
+.site-footer i {
+  margin-right: 8px;
+}
+
+/* Last Updated Timestamp */
+.last-updated {
+  text-align: center;
+  padding: 15px;
+  background: #f0f0f0;
+  border-radius: 8px;
+  margin: 20px 0;
+  font-size: 1.1em;
+  color: #003087;
+}
+
+.last-updated strong {
+  color: #ff6200;
 }
 
 /* Bracket viewer modal */
