@@ -78,30 +78,39 @@
         };
         firebase.initializeApp(firebaseConfig);
 
-        // Load admin ticker messages
+        // Load admin ticker messages (runs AFTER Firebase is initialized)
         const db = firebase.firestore();
-        db.collection('adminMessages').doc('ticker').onSnapshot(doc => {
-            if (doc.exists && doc.data().enabled) {
-                const data = doc.data();
-                const messages = data.messages || [];
+        
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            db.collection('adminMessages').doc('ticker').onSnapshot(doc => {
+                const tickerContent = document.getElementById('tickerContent');
+                const adminTicker = document.getElementById('adminTicker');
                 
-                if (messages.length > 0) {
-                    const tickerContent = document.getElementById('tickerContent');
-                    const adminTicker = document.getElementById('adminTicker');
+                if (doc.exists && doc.data().enabled) {
+                    const data = doc.data();
+                    const messages = data.messages || [];
                     
-                    // Build ticker HTML with multiple messages
-                    let tickerHTML = '';
-                    messages.forEach(msg => {
-                        tickerHTML += `<span class="ticker-item">${msg}</span>`;
-                    });
-                    
-                    // Duplicate for seamless loop
-                    tickerContent.innerHTML = tickerHTML + tickerHTML;
-                    adminTicker.style.display = 'block';
+                    if (messages.length > 0) {
+                        // Build ticker HTML with multiple messages
+                        let tickerHTML = '';
+                        messages.forEach(msg => {
+                            tickerHTML += `<span class="ticker-item">${msg}</span>`;
+                        });
+                        
+                        // Duplicate for seamless loop
+                        tickerContent.innerHTML = tickerHTML + tickerHTML;
+                        adminTicker.style.display = 'block';
+                    } else {
+                        adminTicker.style.display = 'none';
+                    }
+                } else {
+                    adminTicker.style.display = 'none';
                 }
-            } else {
-                document.getElementById('adminTicker').style.display = 'none';
-            }
+            }, err => {
+                // Silently fail if ticker doesn't exist yet
+                console.log('Ticker not configured yet');
+            });
         });
     </script>
     <script src="script.js"></script>
