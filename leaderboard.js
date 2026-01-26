@@ -23,6 +23,7 @@ const closeModal = document.querySelector(".close-modal");
 
 let allBrackets = [];
 let allScores = {};
+let lastScoredTime = null;
 
 // Load all brackets and scores
 function loadLeaderboard() {
@@ -37,15 +38,57 @@ function loadLeaderboard() {
     // Listen to scores collection
     onSnapshot(collection(db, "scores"), scoresSnap => {
       allScores = {};
+      lastScoredTime = null;
       
       scoresSnap.forEach(d => {
-        allScores[d.id] = d.data();
+        const data = d.data();
+        allScores[d.id] = data;
+        
+        // Track the most recent scoring time
+        if (data.lastScored) {
+          const scoredTime = data.lastScored.toDate();
+          if (!lastScoredTime || scoredTime > lastScoredTime) {
+            lastScoredTime = scoredTime;
+          }
+        }
       });
       
       // Now render the leaderboard with combined data
       renderLeaderboard();
+      updateLastUpdated();
     });
   });
+}
+
+function updateLastUpdated() {
+  // Find or create the last updated element
+  let lastUpdatedEl = document.getElementById('last-updated');
+  
+  if (!lastUpdatedEl) {
+    lastUpdatedEl = document.createElement('div');
+    lastUpdatedEl.id = 'last-updated';
+    lastUpdatedEl.className = 'last-updated';
+    
+    // Insert it before the table
+    const table = document.querySelector('.table');
+    table.parentNode.insertBefore(lastUpdatedEl, table);
+  }
+  
+  if (lastScoredTime) {
+    const options = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    };
+    const formattedTime = lastScoredTime.toLocaleString('en-US', options);
+    lastUpdatedEl.innerHTML = `<i class="fa fa-clock-o"></i> Last Updated: <strong>${formattedTime}</strong>`;
+  } else {
+    lastUpdatedEl.innerHTML = `<i class="fa fa-info-circle"></i> Scores have not been calculated yet.`;
+  }
 }
 
 function renderLeaderboard() {
