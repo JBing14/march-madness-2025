@@ -101,6 +101,32 @@ nav a:hover {
   padding: 20px;
   margin: 0 auto;
   overflow-x: auto;
+  position: relative;
+}
+
+/* Scroll indicator for mobile */
+#bracket::before {
+  content: '← Scroll to see full bracket →';
+  display: none;
+  position: sticky;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 10px;
+  background: #003087;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85em;
+  z-index: 150;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 768px) {
+  #bracket::before {
+    display: block;
+  }
 }
 
 .bracket-wrapper {
@@ -333,8 +359,11 @@ nav a:hover {
 /* MOBILE & TABLET */
 @media (max-width: 1400px) {
   #bracket {
-    overflow-x: scroll;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     padding: 10px;
+    width: 100%;
   }
   
   .bracket-wrapper {
@@ -343,26 +372,103 @@ nav a:hover {
 }
 
 @media (max-width: 768px) {
-  .round {
-    width: 130px;
+  body {
+    overflow-x: hidden;
   }
   
-  .round h3 {
-    font-size: 0.75em;
-    padding: 8px 2px;
-  }
-  
-  .slot {
-    font-size: 0.65em;
-    padding: 4px 5px;
-  }
-  
-  .region h4 {
-    font-size: 0.85em;
+  #bracket {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 5px;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
   }
   
   .bracket-wrapper {
-    min-width: 1600px;
+    min-width: 1400px;
+    min-height: 1800px;
+  }
+  
+  .round {
+    width: 110px;
+  }
+  
+  .round h3 {
+    font-size: 0.7em;
+    padding: 6px 2px;
+    top: -45px;
+  }
+  
+  .slot {
+    font-size: 0.6em;
+    padding: 4px 3px;
+    min-height: 22px;
+    max-height: 22px;
+  }
+  
+  .region h4 {
+    font-size: 0.75em;
+    padding: 6px;
+    margin-bottom: 15px;
+  }
+  
+  .champion-slot {
+    font-size: 1.1em !important;
+    padding: 15px 10px !important;
+    min-width: 120px;
+  }
+  
+  /* Adjust spacing for mobile */
+  .round-1 .match {
+    height: 48px;
+    margin-bottom: 16px;
+  }
+  
+  .round-2 .match {
+    height: 112px;
+    margin-bottom: 16px;
+  }
+  
+  .round-3 .match {
+    height: 240px;
+    margin-bottom: 16px;
+  }
+  
+  .round-4 .match {
+    height: 496px;
+    margin-bottom: 16px;
+  }
+  
+  .round-5 {
+    padding-top: 520px;
+  }
+  
+  .round-6.left,
+  .round-6.right {
+    padding-top: 560px;
+  }
+  
+  .round-7 {
+    padding-top: 590px;
+  }
+  
+  /* User form mobile optimization */
+  #user-form {
+    margin: 10px;
+    padding: 15px;
+  }
+  
+  #user-form input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .hero-wrap h1 {
+    font-size: 1.8em;
+  }
+  
+  nav {
+    font-size: 0.9em;
   }
 }
 
@@ -549,6 +655,8 @@ pre {
   max-width: 1600px;
   border-radius: 8px;
   position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .close-modal {
@@ -557,8 +665,38 @@ pre {
   font-size: 28px;
   font-weight: bold;
   cursor: pointer;
+  position: sticky;
+  right: 0;
+  top: 0;
+  z-index: 1001;
 }
 
 .close-modal:hover {
   color: #000;
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 5% auto;
+    padding: 10px;
+    width: 98%;
+    max-height: 90vh;
+  }
+  
+  .close-modal {
+    font-size: 32px;
+    padding: 10px;
+    background: white;
+    border-radius: 50%;
+  }
+  
+  #modalTitle {
+    font-size: 1.2em;
+    margin-top: 10px;
+  }
+  
+  #modalBracket {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
