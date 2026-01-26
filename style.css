@@ -104,28 +104,24 @@ nav a:hover {
   position: relative;
 }
 
-/* Scroll indicator for mobile */
-#bracket::before {
-  content: '← Scroll to see full bracket →';
-  display: none;
-  position: sticky;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 10px;
-  background: #003087;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 0.85em;
-  z-index: 150;
-  text-align: center;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-}
-
+/* Scroll indicator for mobile ONLY */
 @media (max-width: 768px) {
   #bracket::before {
+    content: '← Scroll to see full bracket →';
     display: block;
+    position: sticky;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 10px;
+    background: #003087;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    z-index: 150;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
   }
 }
 
@@ -363,7 +359,6 @@ nav a:hover {
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     padding: 10px;
-    width: 100%;
   }
   
   .bracket-wrapper {
@@ -372,17 +367,11 @@ nav a:hover {
 }
 
 @media (max-width: 768px) {
-  body {
-    overflow-x: hidden;
-  }
-  
   #bracket {
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
     padding: 5px;
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
   }
   
   .bracket-wrapper {
