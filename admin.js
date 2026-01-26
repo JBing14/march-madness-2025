@@ -402,12 +402,15 @@ function buildBracketFromCSV(data) {
 
 function buildControls() {
   resultsControls.innerHTML = '';
-  const regionNames = ['south', 'midwest', 'east', 'west'];
+  
+  // Get region names dynamically from masterBracket
+  const regionNames = masterBracket.regions.map(r => r.name.toLowerCase().replace(/\s+/g, ''));
+  const regionDisplayNames = masterBracket.regions.map(r => r.name);
   
   regionNames.forEach((region, rIdx) => {
     const regionDiv = document.createElement('div');
     regionDiv.className = 'col-md-3';
-    regionDiv.innerHTML = `<h4 style="color: #003087;">${region.toUpperCase()}</h4>`;
+    regionDiv.innerHTML = `<h4 style="color: #003087;">${regionDisplayNames[rIdx].toUpperCase()}</h4>`;
     
     ['round1', 'round2', 'round3', 'round4'].forEach(round => {
       const num = round === 'round1' ? 8 : round === 'round2' ? 4 : round === 'round3' ? 2 : 1;
@@ -440,7 +443,7 @@ function buildControls() {
   const semis1Sel = document.createElement('select');
   semis1Sel.className = 'form-select mb-2';
   semis1Sel.dataset.game = 'semis1-game1';
-  semis1Sel.innerHTML = `<option value="">Semi 1 (South vs Midwest)</option>`;
+  semis1Sel.innerHTML = `<option value="">Semi 1 (${regionDisplayNames[0]} vs ${regionDisplayNames[1]})</option>`;
   semis1Sel.onchange = () => {
     if (semis1Sel.value) {
       officialResults.winners['semis1-game1'] = semis1Sel.value;
@@ -452,7 +455,7 @@ function buildControls() {
   const semis2Sel = document.createElement('select');
   semis2Sel.className = 'form-select mb-2';
   semis2Sel.dataset.game = 'semis2-game1';
-  semis2Sel.innerHTML = `<option value="">Semi 2 (East vs West)</option>`;
+  semis2Sel.innerHTML = `<option value="">Semi 2 (${regionDisplayNames[2]} vs ${regionDisplayNames[3]})</option>`;
   semis2Sel.onchange = () => {
     if (semis2Sel.value) {
       officialResults.winners['semis2-game1'] = semis2Sel.value;
@@ -510,7 +513,8 @@ function handleWinnerSelection(region, round, gameNum, winner) {
 }
 
 function updateDownstreamDropdowns() {
-  const regionNames = ['south', 'midwest', 'east', 'west'];
+  // Get region names dynamically
+  const regionNames = masterBracket.regions.map(r => r.name.toLowerCase().replace(/\s+/g, ''));
   
   // Update Round 2
   for (let rIdx = 0; rIdx < regionNames.length; rIdx++) {
@@ -594,11 +598,15 @@ function updateDownstreamDropdowns() {
   // Update Semis 1
   const semis1Sel = document.querySelector('[data-game="semis1-game1"]');
   if (semis1Sel) {
-    const southWinner = officialResults.winners['south-round4-game1'];
-    const midwestWinner = officialResults.winners['midwest-round4-game1'];
+    const region0 = regionNames[0];
+    const region1 = regionNames[1];
+    const southWinner = officialResults.winners[`${region0}-round4-game1`];
+    const midwestWinner = officialResults.winners[`${region1}-round4-game1`];
     
     const currentValue = semis1Sel.value;
-    semis1Sel.innerHTML = `<option value="">Semi 1 (South vs Midwest)</option>`;
+    const regionDisplay0 = masterBracket.regions[0].name;
+    const regionDisplay1 = masterBracket.regions[1].name;
+    semis1Sel.innerHTML = `<option value="">Semi 1 (${regionDisplay0} vs ${regionDisplay1})</option>`;
     
     if (southWinner) semis1Sel.innerHTML += `<option value="${southWinner}">${southWinner}</option>`;
     if (midwestWinner) semis1Sel.innerHTML += `<option value="${midwestWinner}">${midwestWinner}</option>`;
@@ -611,11 +619,15 @@ function updateDownstreamDropdowns() {
   // Update Semis 2
   const semis2Sel = document.querySelector('[data-game="semis2-game1"]');
   if (semis2Sel) {
-    const eastWinner = officialResults.winners['east-round4-game1'];
-    const westWinner = officialResults.winners['west-round4-game1'];
+    const region2 = regionNames[2];
+    const region3 = regionNames[3];
+    const eastWinner = officialResults.winners[`${region2}-round4-game1`];
+    const westWinner = officialResults.winners[`${region3}-round4-game1`];
     
     const currentValue = semis2Sel.value;
-    semis2Sel.innerHTML = `<option value="">Semi 2 (East vs West)</option>`;
+    const regionDisplay2 = masterBracket.regions[2].name;
+    const regionDisplay3 = masterBracket.regions[3].name;
+    semis2Sel.innerHTML = `<option value="">Semi 2 (${regionDisplay2} vs ${regionDisplay3})</option>`;
     
     if (eastWinner) semis2Sel.innerHTML += `<option value="${eastWinner}">${eastWinner}</option>`;
     if (westWinner) semis2Sel.innerHTML += `<option value="${westWinner}">${westWinner}</option>`;
@@ -644,25 +656,27 @@ function updateDownstreamDropdowns() {
 }
 
 function buildBonusSelects() {
-  const regionNames = ['south', 'midwest', 'east', 'west'];
+  // Get region names dynamically from masterBracket
+  const regionNames = masterBracket.regions.map(r => r.name.toLowerCase().replace(/\s+/g, ''));
+  const regionDisplayNames = masterBracket.regions.map(r => r.name);
   
   // Build bonus game selects
   ['bonus1', 'bonus2', 'bonus3', 'bonus4'].forEach(b => {
     const sel = document.getElementById(b);
     sel.innerHTML = '<option value="">Select Bonus Game</option>';
     
-    regionNames.forEach(r => {
+    regionNames.forEach((r, idx) => {
       ['round1', 'round2', 'round3', 'round4'].forEach(round => {
         const num = round === 'round1' ? 8 : round === 'round2' ? 4 : round === 'round3' ? 2 : 1;
         
         for (let g = 1; g <= num; g++) {
-          sel.innerHTML += `<option value="${r}-${round}-game${g}">${r.toUpperCase()} ${round.toUpperCase()} Game ${g}</option>`;
+          sel.innerHTML += `<option value="${r}-${round}-game${g}">${regionDisplayNames[idx].toUpperCase()} ${round.toUpperCase()} Game ${g}</option>`;
         }
       });
     });
     
-    sel.innerHTML += `<option value="semis1-game1">SEMI 1 (South vs Midwest)</option>`;
-    sel.innerHTML += `<option value="semis2-game1">SEMI 2 (East vs West)</option>`;
+    sel.innerHTML += `<option value="semis1-game1">SEMI 1 (${regionDisplayNames[0]} vs ${regionDisplayNames[1]})</option>`;
+    sel.innerHTML += `<option value="semis2-game1">SEMI 2 (${regionDisplayNames[2]} vs ${regionDisplayNames[3]})</option>`;
     sel.innerHTML += `<option value="championship-game1">CHAMPIONSHIP</option>`;
   });
 }
