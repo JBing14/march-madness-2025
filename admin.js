@@ -41,6 +41,13 @@ const uploadBtn = document.getElementById('uploadBtn');
 const uploadStatus = document.getElementById('uploadStatus');
 const downloadTemplate = document.getElementById('downloadTemplate');
 
+const generateOutlinedHelper = document.getElementById('generateOutlinedHelper');
+const outlinedHelper = document.getElementById('outlinedHelper');
+const teamPickerGrid = document.getElementById('teamPickerGrid');
+const selectedBoxInfo = document.getElementById('selectedBoxInfo');
+const selectedBoxId = document.getElementById('selectedBoxId');
+const copyBoxId = document.getElementById('copyBoxId');
+
 let currentEditId = null;
 let allBrackets = [];
 let officialResults = { winners: {}, bonusGames: {} };
@@ -190,6 +197,82 @@ West,8,2,St Johns,15,Omaha`;
   a.download = 'march_madness_bracket_template.csv';
   a.click();
   window.URL.revokeObjectURL(url);
+};
+
+// Generate outlined box helper
+generateOutlinedHelper.onclick = () => {
+  if (outlinedHelper.style.display === 'none') {
+    buildTeamPickerGrid();
+    outlinedHelper.style.display = 'block';
+    generateOutlinedHelper.textContent = 'Hide Team Picker Helper';
+  } else {
+    outlinedHelper.style.display = 'none';
+    generateOutlinedHelper.textContent = 'Show Team Picker Helper';
+  }
+};
+
+function buildTeamPickerGrid() {
+  teamPickerGrid.innerHTML = '';
+  const regionNames = ['south', 'midwest', 'east', 'west'];
+  
+  regionNames.forEach((region, rIdx) => {
+    const regionDiv = document.createElement('div');
+    regionDiv.style.marginBottom = '30px';
+    regionDiv.innerHTML = `<h5 style="color: #003087; border-bottom: 2px solid #ff6200; padding-bottom: 5px;">${region.toUpperCase()}</h5>`;
+    
+    // Only show Round 1 for simplicity (can extend to all rounds if needed)
+    const round = 'round1';
+    const teams = masterBracket.regions[rIdx].round1;
+    
+    teams.forEach((matchup, gameIdx) => {
+      const gameDiv = document.createElement('div');
+      gameDiv.style.display = 'flex';
+      gameDiv.style.marginBottom = '10px';
+      gameDiv.style.gap = '10px';
+      
+      matchup.forEach((team, slotIdx) => {
+        const teamBox = document.createElement('div');
+        teamBox.textContent = team;
+        teamBox.style.padding = '8px 12px';
+        teamBox.style.background = '#fff';
+        teamBox.style.border = '2px solid #003087';
+        teamBox.style.borderRadius = '4px';
+        teamBox.style.cursor = 'pointer';
+        teamBox.style.flex = '1';
+        teamBox.style.textAlign = 'center';
+        teamBox.style.fontSize = '0.9em';
+        
+        const boxId = `${region}-${round}-game${gameIdx + 1}-slot${slotIdx + 1}`;
+        
+        teamBox.onclick = () => {
+          selectedBoxId.textContent = boxId;
+          selectedBoxInfo.style.display = 'block';
+          
+          // Highlight selected
+          document.querySelectorAll('#teamPickerGrid > div > div > div').forEach(box => {
+            box.style.background = '#fff';
+            box.style.borderColor = '#003087';
+          });
+          teamBox.style.background = '#ff6200';
+          teamBox.style.borderColor = '#ff6200';
+          teamBox.style.color = 'white';
+        };
+        
+        gameDiv.appendChild(teamBox);
+      });
+      
+      regionDiv.appendChild(gameDiv);
+    });
+    
+    teamPickerGrid.appendChild(regionDiv);
+  });
+}
+
+copyBoxId.onclick = () => {
+  const text = selectedBoxId.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Copied to clipboard: ' + text + '\n\nNow paste it into one of the Outlined Box fields above!');
+  });
 };
 
 // Upload and Parse CSV/Excel
@@ -582,26 +665,6 @@ function buildBonusSelects() {
     sel.innerHTML += `<option value="semis2-game1">SEMI 2 (East vs West)</option>`;
     sel.innerHTML += `<option value="championship-game1">CHAMPIONSHIP</option>`;
   });
-  
-  // Build outlined game selects (same options)
-  ['outlined1', 'outlined2', 'outlined3', 'outlined4'].forEach(o => {
-    const sel = document.getElementById(o);
-    sel.innerHTML = '<option value="">Select Game to Outline</option>';
-    
-    regionNames.forEach(r => {
-      ['round1', 'round2', 'round3', 'round4'].forEach(round => {
-        const num = round === 'round1' ? 8 : round === 'round2' ? 4 : round === 'round3' ? 2 : 1;
-        
-        for (let g = 1; g <= num; g++) {
-          sel.innerHTML += `<option value="${r}-${round}-game${g}">${r.toUpperCase()} ${round.toUpperCase()} Game ${g}</option>`;
-        }
-      });
-    });
-    
-    sel.innerHTML += `<option value="semis1-game1">SEMI 1 (South vs Midwest)</option>`;
-    sel.innerHTML += `<option value="semis2-game1">SEMI 2 (East vs West)</option>`;
-    sel.innerHTML += `<option value="championship-game1">CHAMPIONSHIP</option>`;
-  });
 }
 
 async function loadOfficialResults() {
@@ -642,11 +705,11 @@ function populateResultsControls(results) {
     });
   }
   
-  if (results.outlinedGames) {
-    Object.keys(results.outlinedGames).forEach(outlinedKey => {
-      const sel = document.getElementById(outlinedKey);
-      if (sel) {
-        sel.value = results.outlinedGames[outlinedKey];
+  if (results.outlinedBoxes && Array.isArray(results.outlinedBoxes)) {
+    results.outlinedBoxes.forEach((boxId, idx) => {
+      const input = document.getElementById(`outlined${idx + 1}`);
+      if (input) {
+        input.value = boxId;
       }
     });
   }
@@ -657,7 +720,7 @@ function populateResultsControls(results) {
 saveResultsBtn.onclick = async () => {
   const winners = {};
   const bonusGames = {};
-  const outlinedGames = {};
+  const outlinedBoxes = [];
   
   document.querySelectorAll('#resultsControls select').forEach(sel => {
     const gameKey = sel.dataset.game;
@@ -674,9 +737,9 @@ saveResultsBtn.onclick = async () => {
   });
   
   ['outlined1', 'outlined2', 'outlined3', 'outlined4'].forEach(o => {
-    const sel = document.getElementById(o);
-    if (sel.value) {
-      outlinedGames[o] = sel.value;
+    const input = document.getElementById(o);
+    if (input.value.trim()) {
+      outlinedBoxes.push(input.value.trim());
     }
   });
   
@@ -684,12 +747,12 @@ saveResultsBtn.onclick = async () => {
     await setDoc(doc(db, 'officialResults', 'current'), {
       winners,
       bonusGames,
-      outlinedGames,
+      outlinedBoxes,
       updatedAt: new Date()
     });
     
-    officialResults = { winners, bonusGames, outlinedGames };
-    scoreStatus.textContent = 'Results saved! Click "Score All Brackets" to update scores.';
+    officialResults = { winners, bonusGames, outlinedBoxes };
+    scoreStatus.textContent = 'Results saved! Outlined boxes will appear on bracket page. Click "Score All Brackets" to update scores.';
     scoreStatus.style.color = 'green';
   } catch (err) {
     scoreStatus.textContent = 'Error: ' + err.message;
