@@ -18,6 +18,15 @@
     </div>
   </header>
 
+  <!-- ADMIN MESSAGE TICKER -->
+  <div id="adminTicker" class="admin-ticker" style="display:none;">
+    <div class="ticker-wrap">
+      <div class="ticker-content" id="tickerContent">
+        <span class="ticker-item">Loading announcements...</span>
+      </div>
+    </div>
+  </div>
+
   <nav><a href="index.html">Submit Bracket</a> | <a href="leaderboard.html">Leaderboard</a> | <a href="rules.html">Rules & Payments</a> | <a href="admin.html" class="subtle">Admin</a></nav>
 
   <div class="container my-4">
@@ -63,6 +72,47 @@
   </footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Initialize Firebase for ticker
+    const firebaseConfig = {
+      apiKey: "AIzaSyB27qEP0k2PR8Zz_z_A8KjGcXvxX9OROQA",
+      authDomain: "marchmadness2025-24f04.firebaseapp.com",
+      projectId: "marchmadness2025-24f04",
+      storageBucket: "marchmadness2025-24f04.firebasestorage.app",
+      messagingSenderId: "916205408985",
+      appId: "1:916205408985:web:1dd57fc8704c6c0e8fe4c8",
+      measurementId: "G-TKTZB2FFRB"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    // Load admin ticker messages
+    const db = firebase.firestore();
+    db.collection('adminMessages').doc('ticker').onSnapshot(doc => {
+      if (doc.exists && doc.data().enabled) {
+        const data = doc.data();
+        const messages = data.messages || [];
+        
+        if (messages.length > 0) {
+          const tickerContent = document.getElementById('tickerContent');
+          const adminTicker = document.getElementById('adminTicker');
+          
+          // Build ticker HTML with multiple messages
+          let tickerHTML = '';
+          messages.forEach(msg => {
+            tickerHTML += `<span class="ticker-item">${msg}</span>`;
+          });
+          
+          // Duplicate for seamless loop
+          tickerContent.innerHTML = tickerHTML + tickerHTML;
+          adminTicker.style.display = 'block';
+        }
+      } else {
+        document.getElementById('adminTicker').style.display = 'none';
+      }
+    });
+  </script>
   <script type="module" src="leaderboard.js"></script>
 </body>
 </html>
