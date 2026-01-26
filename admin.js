@@ -114,10 +114,17 @@ onAuthStateChanged(auth, user => {
 });
 
 loginBtn.onclick = async () => {
+  console.log('Login button clicked');
+  console.log('Email:', emailInput.value);
+  console.log('Password length:', passwordInput.value.length);
+  
   try {
+    console.log('Attempting sign in...');
     await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+    console.log('Sign in successful');
     loginError.textContent = '';
   } catch (err) {
+    console.error('Login error:', err);
     loginError.textContent = 'Login failed: ' + err.message;
   }
 };
@@ -198,17 +205,19 @@ function populateRound1() {
   regionNames.forEach((region, rIdx) => {
     for (let g = 1; g <= 8; g++) {
       const sel = document.querySelector(`[data-game="${region}-round1-game${g}"]`);
-      if (sel) {
-        const teams = masterBracket.regions[rIdx].round1[g - 1];
-        const currentValue = sel.value;
-        const label = sel.querySelector('option').textContent;
-        
-        sel.innerHTML = `<option value="">${label}</option>`;
-        sel.innerHTML += `<option value="${teams[0]}">${teams[0]}</option>`;
-        sel.innerHTML += `<option value="${teams[1]}">${teams[1]}</option>`;
-        
-        if (currentValue) sel.value = currentValue;
+      if (!sel) {
+        return; // Changed from continue to return
       }
+      
+      const teams = masterBracket.regions[rIdx].round1[g - 1];
+      const currentValue = sel.value;
+      const label = sel.querySelector('option').textContent;
+      
+      sel.innerHTML = `<option value="">${label}</option>`;
+      sel.innerHTML += `<option value="${teams[0]}">${teams[0]}</option>`;
+      sel.innerHTML += `<option value="${teams[1]}">${teams[1]}</option>`;
+      
+      if (currentValue) sel.value = currentValue;
     }
   });
 }
@@ -228,7 +237,7 @@ function updateDownstreamDropdowns() {
   regionNames.forEach((region, rIdx) => {
     for (let g = 1; g <= 4; g++) {
       const sel = document.querySelector(`[data-game="${region}-round2-game${g}"]`);
-      if (!sel) continue;
+      if (!sel) return;
       
       // Round 2 Game 1 = winners of R1 Games 1 & 2
       // Round 2 Game 2 = winners of R1 Games 3 & 4, etc.
@@ -255,7 +264,7 @@ function updateDownstreamDropdowns() {
   regionNames.forEach((region, rIdx) => {
     for (let g = 1; g <= 2; g++) {
       const sel = document.querySelector(`[data-game="${region}-round3-game${g}"]`);
-      if (!sel) continue;
+      if (!sel) return;
       
       const r2Game1 = (g - 1) * 2 + 1;
       const r2Game2 = (g - 1) * 2 + 2;
@@ -279,7 +288,7 @@ function updateDownstreamDropdowns() {
   // Update Round 4 (Elite Eight) based on Round 3 winners
   regionNames.forEach((region, rIdx) => {
     const sel = document.querySelector(`[data-game="${region}-round4-game1"]`);
-    if (!sel) continue;
+    if (!sel) return;
     
     const winner1 = officialResults.winners[`${region}-round3-game1`];
     const winner2 = officialResults.winners[`${region}-round3-game2`];
