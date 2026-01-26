@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB27qEP0k2PR8Zz_z_A8KjGcXvxX9OROQA",
@@ -21,71 +21,36 @@ const modalTitle = document.getElementById("modalTitle");
 const modalBracket = document.getElementById("modalBracket");
 const closeModal = document.querySelector(".close-modal");
 
-let allScores = [];
 let allBrackets = [];
+let allScores = {};
 
-// Load all brackets first
-async function loadAllBrackets() {
-  const bracketsSnap = await getDocs(collection(db, 'brackets'));
-  allBrackets = [];
-  bracketsSnap.forEach(d => {
-    allBrackets.push({ id: d.id, ...d.data() });
-  });
-}
-
-// Listen to scores and brackets
-onSnapshot(query(collection(db, "brackets"), orderBy("submittedAt", "desc")), async () => {
-  await loadAllBrackets();
-  loadLeaderboard();
-});
-
+// Load all brackets and scores
 function loadLeaderboard() {
-  onSnapshot(query(collection(db, "scores"), orderBy("total", "desc"), orderBy("tiebreaker", "asc")), snap => {
-    tableBody.innerHTML = "";
-    allScores = [];
+  // Listen to brackets collection
+  onSnapshot(query(collection(db, "brackets"), orderBy("submittedAt", "desc")), bracketsSnap => {
+    allBrackets = [];
     
-    if (snap.empty) {
-      // Show all brackets even if not scored yet
-      showUncoredBrackets();
-      return;
-    }
-    
-    snap.forEach((d, idx) => {
-      const data = d.data();
-      allScores.push({ id: d.id, ...data });
-      
-      const tr = document.createElement("tr");
-      tr.dataset.id = d.id;
-      tr.innerHTML = `
-        <td><strong>${idx + 1}</strong></td>
-        <td>${data.entryName || 'Unknown'}</td>
-        <td><strong>${data.total || 0}</strong></td>
-        <td>${data.tiebreaker || 0}</td>
-      `;
-      
-      tr.onclick = () => showBracket(d.id, data.entryName);
-      
-      tableBody.appendChild(tr);
+    bracketsSnap.forEach(d => {
+      allBrackets.push({ id: d.id, ...d.data() });
     });
     
-    // Add unscored brackets at the bottom
-    const scoredIds = new Set(allScores.map(s => s.id));
-    allBrackets.filter(b => !scoredIds.has(b.id)).forEach(bracket => {
-      const tr = document.createElement("tr");
-      tr.style.opacity = '0.7';
-      tr.innerHTML = `
-        <td>-</td>
-        <td>${bracket.entryName}</td>
-        <td>Not Scored</td>
-        <td>${bracket.tiebreaker}</td>
-      `;
-      tr.onclick = () => showBracket(bracket.id, bracket.entryName);
-      tableBody.appendChild(tr);
+    // Listen to scores collection
+    onSnapshot(collection(db, "scores"), scoresSnap => {
+      allScores = {};
+      
+      scoresSnap.forEach(d => {
+        allScores[d.id] = d.data();
+      });
+      
+      // Now render the leaderboard with combined data
+      renderLeaderboard();
     });
   });
 }
 
-function showUncoredBrackets() {
+function renderLeaderboard() {
+  tableBody.innerHTML = "";
+  
   if (allBrackets.length === 0) {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td colspan="4" style="text-align: center; padding: 20px;">No brackets submitted yet.</td>`;
@@ -93,37 +58,71 @@ function showUncoredBrackets() {
     return;
   }
   
-  allBrackets.forEach(bracket => {
+  // Combine brackets with their scores
+  const leaderboardData = allBrackets.map(bracket => {
+    const score = allScores[bracket.id];
+    return {
+      id: bracket.id,
+      entryName: bracket.entryName,
+      email: bracket.email,
+      tiebreaker: bracket.tiebreaker,
+      total: score ? score.total : 0,
+      isScored: !!score,
+      picks: bracket.picks
+    };
+  });
+  
+  // Sort by score (desc), then by tiebreaker (asc)
+  leaderboardData.sort((a, b) => {
+    if (b.total !== a.total) {
+      return b.total - a.total;
+    }
+    return a.tiebreaker - b.tiebreaker;
+  });
+  
+  // Render rows
+  leaderboardData.forEach((entry, idx) => {
     const tr = document.createElement("tr");
+    tr.dataset.id = entry.id;
+    
+    if (!entry.isScored) {
+      tr.style.opacity = '0.7';
+    }
+    
+    const rank = entry.isScored ? idx + 1 : '-';
+    const score = entry.isScored ? entry.total : 'Not Scored';
+    
     tr.innerHTML = `
-      <td>-</td>
-      <td>${bracket.entryName}</td>
-      <td>Not Scored</td>
-      <td>${bracket.tiebreaker}</td>
+      <td><strong>${rank}</strong></td>
+      <td>${entry.entryName || 'Unknown'}</td>
+      <td><strong>${score}</strong></td>
+      <td>${entry.tiebreaker || 0}</td>
     `;
-    tr.onclick = () => showBracket(bracket.id, bracket.entryName);
+    
+    tr.onclick = () => showBracket(entry.id, entry.entryName, entry.picks);
+    
     tableBody.appendChild(tr);
   });
 }
 
-async function showBracket(bracketId, entryName) {
-  try {
-    const bracketDoc = await getDoc(doc(db, "brackets", bracketId));
-    if (!bracketDoc.exists()) {
-      alert("Bracket not found");
+async function showBracket(bracketId, entryName, picks) {
+  if (!picks) {
+    try {
+      const bracketDoc = await getDoc(doc(db, "brackets", bracketId));
+      if (!bracketDoc.exists()) {
+        alert("Bracket not found");
+        return;
+      }
+      picks = bracketDoc.data().picks;
+    } catch (err) {
+      alert("Error loading bracket: " + err.message);
       return;
     }
-    
-    const bracketData = bracketDoc.data();
-    modalTitle.textContent = `${entryName}'s Bracket`;
-    
-    // Render the bracket visually
-    renderBracketView(bracketData.picks);
-    
-    bracketModal.style.display = "block";
-  } catch (err) {
-    alert("Error loading bracket: " + err.message);
   }
+  
+  modalTitle.textContent = `${entryName}'s Bracket`;
+  renderBracketView(picks);
+  bracketModal.style.display = "block";
 }
 
 function renderBracketView(picks) {
@@ -310,4 +309,4 @@ exportPdf.onclick = () => {
 };
 
 // Initialize
-loadAllBrackets().then(() => loadLeaderboard());
+loadLeaderboard();
