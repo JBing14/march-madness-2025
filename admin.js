@@ -591,15 +591,18 @@ function updateDownstreamDropdowns() {
       const winner1 = officialResults.winners[`${region}-round1-game${r1Game1}`];
       const winner2 = officialResults.winners[`${region}-round1-game${r1Game2}`];
       
-      const currentValue = sel.value;
+      // Get the saved value from officialResults instead of dropdown
+      const gameKey = `${region}-round2-game${g}`;
+      const savedValue = officialResults.winners[gameKey];
       const label = sel.querySelector('option').textContent;
       sel.innerHTML = `<option value="">${label}</option>`;
       
       if (winner1) sel.innerHTML += `<option value="${winner1}">${winner1}</option>`;
       if (winner2) sel.innerHTML += `<option value="${winner2}">${winner2}</option>`;
       
-      if (currentValue && (currentValue === winner1 || currentValue === winner2)) {
-        sel.value = currentValue;
+      // Restore saved value if it exists and matches one of the options
+      if (savedValue && (savedValue === winner1 || savedValue === winner2)) {
+        sel.value = savedValue;
       }
     }
   }
@@ -619,15 +622,18 @@ function updateDownstreamDropdowns() {
       const winner1 = officialResults.winners[`${region}-round2-game${r2Game1}`];
       const winner2 = officialResults.winners[`${region}-round2-game${r2Game2}`];
       
-      const currentValue = sel.value;
+      // Get the saved value from officialResults
+      const gameKey = `${region}-round3-game${g}`;
+      const savedValue = officialResults.winners[gameKey];
       const label = sel.querySelector('option').textContent;
       sel.innerHTML = `<option value="">${label}</option>`;
       
       if (winner1) sel.innerHTML += `<option value="${winner1}">${winner1}</option>`;
       if (winner2) sel.innerHTML += `<option value="${winner2}">${winner2}</option>`;
       
-      if (currentValue && (currentValue === winner1 || currentValue === winner2)) {
-        sel.value = currentValue;
+      // Restore saved value
+      if (savedValue && (savedValue === winner1 || savedValue === winner2)) {
+        sel.value = savedValue;
       }
     }
   }
@@ -643,15 +649,18 @@ function updateDownstreamDropdowns() {
     const winner1 = officialResults.winners[`${region}-round3-game1`];
     const winner2 = officialResults.winners[`${region}-round3-game2`];
     
-    const currentValue = sel.value;
+    // Get the saved value from officialResults
+    const gameKey = `${region}-round4-game1`;
+    const savedValue = officialResults.winners[gameKey];
     const label = sel.querySelector('option').textContent;
     sel.innerHTML = `<option value="">${label}</option>`;
     
     if (winner1) sel.innerHTML += `<option value="${winner1}">${winner1}</option>`;
     if (winner2) sel.innerHTML += `<option value="${winner2}">${winner2}</option>`;
     
-    if (currentValue && (currentValue === winner1 || currentValue === winner2)) {
-      sel.value = currentValue;
+    // Restore saved value
+    if (savedValue && (savedValue === winner1 || savedValue === winner2)) {
+      sel.value = savedValue;
     }
   }
   
@@ -663,7 +672,8 @@ function updateDownstreamDropdowns() {
     const southWinner = officialResults.winners[`${region0}-round4-game1`];
     const midwestWinner = officialResults.winners[`${region1}-round4-game1`];
     
-    const currentValue = semis1Sel.value;
+    // Get saved value
+    const savedValue = officialResults.winners['semis1-game1'];
     const regionDisplay0 = masterBracket.regions[0].name;
     const regionDisplay1 = masterBracket.regions[1].name;
     semis1Sel.innerHTML = `<option value="">Semi 1 (${regionDisplay0} vs ${regionDisplay1})</option>`;
@@ -671,8 +681,9 @@ function updateDownstreamDropdowns() {
     if (southWinner) semis1Sel.innerHTML += `<option value="${southWinner}">${southWinner}</option>`;
     if (midwestWinner) semis1Sel.innerHTML += `<option value="${midwestWinner}">${midwestWinner}</option>`;
     
-    if (currentValue && (currentValue === southWinner || currentValue === midwestWinner)) {
-      semis1Sel.value = currentValue;
+    // Restore saved value
+    if (savedValue && (savedValue === southWinner || savedValue === midwestWinner)) {
+      semis1Sel.value = savedValue;
     }
   }
   
@@ -684,7 +695,8 @@ function updateDownstreamDropdowns() {
     const eastWinner = officialResults.winners[`${region2}-round4-game1`];
     const westWinner = officialResults.winners[`${region3}-round4-game1`];
     
-    const currentValue = semis2Sel.value;
+    // Get saved value
+    const savedValue = officialResults.winners['semis2-game1'];
     const regionDisplay2 = masterBracket.regions[2].name;
     const regionDisplay3 = masterBracket.regions[3].name;
     semis2Sel.innerHTML = `<option value="">Semi 2 (${regionDisplay2} vs ${regionDisplay3})</option>`;
@@ -692,8 +704,9 @@ function updateDownstreamDropdowns() {
     if (eastWinner) semis2Sel.innerHTML += `<option value="${eastWinner}">${eastWinner}</option>`;
     if (westWinner) semis2Sel.innerHTML += `<option value="${westWinner}">${westWinner}</option>`;
     
-    if (currentValue && (currentValue === eastWinner || currentValue === westWinner)) {
-      semis2Sel.value = currentValue;
+    // Restore saved value
+    if (savedValue && (savedValue === eastWinner || savedValue === westWinner)) {
+      semis2Sel.value = savedValue;
     }
   }
   
@@ -703,14 +716,16 @@ function updateDownstreamDropdowns() {
     const semis1Winner = officialResults.winners['semis1-game1'];
     const semis2Winner = officialResults.winners['semis2-game1'];
     
-    const currentValue = champSel.value;
+    // Get saved value
+    const savedValue = officialResults.winners['championship-game1'];
     champSel.innerHTML = `<option value="">Championship</option>`;
     
     if (semis1Winner) champSel.innerHTML += `<option value="${semis1Winner}">${semis1Winner}</option>`;
     if (semis2Winner) champSel.innerHTML += `<option value="${semis2Winner}">${semis2Winner}</option>`;
     
-    if (currentValue && (currentValue === semis1Winner || currentValue === semis2Winner)) {
-      champSel.value = currentValue;
+    // Restore saved value
+    if (savedValue && (savedValue === semis1Winner || savedValue === semis2Winner)) {
+      champSel.value = savedValue;
     }
   }
 }
