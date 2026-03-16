@@ -233,7 +233,14 @@ function renderModalRegion(roundId, regionData, roundName, regionIdx) {
   const roundDataObj = regionData[roundName];
   if (!roundDataObj) return;
   
-  Object.keys(roundDataObj).forEach(gameKey => {
+  // Sort games by key to ensure proper order (game1, game2, game3, etc.)
+  const sortedGameKeys = Object.keys(roundDataObj).sort((a, b) => {
+    const numA = parseInt(a.replace('game', ''));
+    const numB = parseInt(b.replace('game', ''));
+    return numA - numB;
+  });
+  
+  sortedGameKeys.forEach(gameKey => {
     const game = roundDataObj[gameKey];
     const matchEl = document.createElement('div');
     matchEl.className = 'match';
