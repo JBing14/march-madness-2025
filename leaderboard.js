@@ -116,12 +116,24 @@ function renderLeaderboard() {
     };
   });
   
-  // Sort by score (desc), then by tiebreaker (asc)
+  // Sort by score (desc), then alphabetically for unscored, then by tiebreaker (asc)
   leaderboardData.sort((a, b) => {
-    if (b.total !== a.total) {
+    // If both are scored or both are unscored
+    if (a.isScored === b.isScored) {
+      // If both have same score
+      if (b.total === a.total) {
+        // If both are unscored (total = 0), sort alphabetically
+        if (a.total === 0 && b.total === 0) {
+          return (a.entryName || '').localeCompare(b.entryName || '');
+        }
+        // Otherwise sort by tiebreaker
+        return a.tiebreaker - b.tiebreaker;
+      }
+      // Different scores - higher score first
       return b.total - a.total;
     }
-    return a.tiebreaker - b.tiebreaker;
+    // Scored entries appear before unscored
+    return b.isScored - a.isScored;
   });
   
   // Render rows
