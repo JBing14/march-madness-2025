@@ -3,6 +3,7 @@ const db = firebase.firestore();
 let locked = false;
 let outlinedBoxes = [];
 let bracketLoaded = false;
+let officialResults = { winners: {} }; // Track official game winners
 
 const regions = [
   {
@@ -148,6 +149,11 @@ function renderRegion(roundId, rIdx, roundName) {
     
     const teams = regions[rIdx][roundName][m];
     
+    // Build the game ID to check for official winner
+    const regionName = regions[rIdx].name.toLowerCase().replace(/\s+/g, '');
+    const gameId = `${regionName}-${roundName}-game${m + 1}`;
+    const officialWinner = officialResults.winners[gameId];
+    
     for (let s = 0; s < 2; s++) {
       const slot = document.createElement('div');
       slot.className = 'slot';
@@ -155,6 +161,16 @@ function renderRegion(roundId, rIdx, roundName) {
       
       // Check if THIS specific slot should be outlined FIRST
       const shouldBeOutlined = isSlotOutlined(rIdx, roundName, m, s);
+      
+      // Check if this team is the official winner
+      if (teams[s] && officialWinner) {
+        if (teams[s] === officialWinner) {
+          slot.classList.add('official-winner');
+          slot.innerHTML = teams[s] + ' <span class="winner-check">✓</span>';
+        } else {
+          slot.classList.add('official-loser');
+        }
+      }
       
       if (teams[s] && !locked) {
         slot.onclick = () => pickRegionRound(rIdx, roundName, m, teams[s]);
@@ -184,10 +200,22 @@ function renderFinalFour() {
   const semis1Match = document.createElement('div');
   semis1Match.className = 'match final-four-match';
   
+  const semis1Winner = officialResults.winners['semis1'];
+  
   for (let s = 0; s < 2; s++) {
     const slot = document.createElement('div');
     slot.className = 'slot';
     slot.textContent = finalFour.semis1[s] || '';
+    
+    // Check if this team is the official winner
+    if (finalFour.semis1[s] && semis1Winner) {
+      if (finalFour.semis1[s] === semis1Winner) {
+        slot.classList.add('official-winner');
+        slot.innerHTML = finalFour.semis1[s] + ' <span class="winner-check">✓</span>';
+      } else {
+        slot.classList.add('official-loser');
+      }
+    }
     
     if (finalFour.semis1[s] && !locked) {
       slot.onclick = () => pickFinalFour('semis1', finalFour.semis1[s]);
@@ -205,10 +233,22 @@ function renderFinalFour() {
   const semis2Match = document.createElement('div');
   semis2Match.className = 'match final-four-match';
   
+  const semis2Winner = officialResults.winners['semis2'];
+  
   for (let s = 0; s < 2; s++) {
     const slot = document.createElement('div');
     slot.className = 'slot';
     slot.textContent = finalFour.semis2[s] || '';
+    
+    // Check if this team is the official winner
+    if (finalFour.semis2[s] && semis2Winner) {
+      if (finalFour.semis2[s] === semis2Winner) {
+        slot.classList.add('official-winner');
+        slot.innerHTML = finalFour.semis2[s] + ' <span class="winner-check">✓</span>';
+      } else {
+        slot.classList.add('official-loser');
+      }
+    }
     
     if (finalFour.semis2[s] && !locked) {
       slot.onclick = () => pickFinalFour('semis2', finalFour.semis2[s]);
@@ -230,6 +270,17 @@ function renderFinalFour() {
   leftChampSlot.className = 'slot';
   leftChampSlot.textContent = finalFour.championship[0] || '';
   
+  const champWinner = officialResults.winners['championship'];
+  
+  if (finalFour.championship[0] && champWinner) {
+    if (finalFour.championship[0] === champWinner) {
+      leftChampSlot.classList.add('official-winner');
+      leftChampSlot.innerHTML = finalFour.championship[0] + ' <span class="winner-check">✓</span>';
+    } else {
+      leftChampSlot.classList.add('official-loser');
+    }
+  }
+  
   if (finalFour.championship[0] && !locked) {
     leftChampSlot.onclick = () => pickFinalFour('championship', finalFour.championship[0]);
     leftChampSlot.classList.add('clickable');
@@ -248,6 +299,15 @@ function renderFinalFour() {
   const rightChampSlot = document.createElement('div');
   rightChampSlot.className = 'slot';
   rightChampSlot.textContent = finalFour.championship[1] || '';
+  
+  if (finalFour.championship[1] && champWinner) {
+    if (finalFour.championship[1] === champWinner) {
+      rightChampSlot.classList.add('official-winner');
+      rightChampSlot.innerHTML = finalFour.championship[1] + ' <span class="winner-check">✓</span>';
+    } else {
+      rightChampSlot.classList.add('official-loser');
+    }
+  }
   
   if (finalFour.championship[1] && !locked) {
     rightChampSlot.onclick = () => pickFinalFour('championship', finalFour.championship[1]);
@@ -486,6 +546,21 @@ async function loadOutlinedBoxes() {
   }
 }
 
+// Load official game results from Firebase
+async function loadOfficialResults() {
+  try {
+    const resultsDoc = await db.collection('officialResults').doc('current').get();
+    if (resultsDoc.exists && resultsDoc.data().winners) {
+      officialResults.winners = resultsDoc.data().winners;
+      console.log('Loaded official results:', officialResults.winners);
+    } else {
+      console.log('No official results found');
+    }
+  } catch (err) {
+    console.error('Error loading official results:', err);
+  }
+}
+
 // Load bracket setup from Firebase (teams and region names)
 async function loadBracketSetup() {
   try {
@@ -537,8 +612,9 @@ function isSlotOutlined(regionIdx, round, gameIdx, slotIdx) {
 }
 
 // Load everything and then render
-Promise.all([loadBracketSetup(), loadOutlinedBoxes()]).then(() => {
+Promise.all([loadBracketSetup(), loadOutlinedBoxes(), loadOfficialResults()]).then(() => {
   console.log('Starting render with outlined boxes:', outlinedBoxes);
+  console.log('Official results loaded:', officialResults.winners);
   console.log('Region names:', regions.map(r => r.name));
   renderBracket();
 });
