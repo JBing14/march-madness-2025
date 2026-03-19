@@ -553,12 +553,93 @@ async function loadOfficialResults() {
     if (resultsDoc.exists && resultsDoc.data().winners) {
       officialResults.winners = resultsDoc.data().winners;
       console.log('Loaded official results:', officialResults.winners);
+      
+      // Apply official results to advance winners through bracket
+      applyOfficialResultsToBracket();
     } else {
       console.log('No official results found');
     }
   } catch (err) {
     console.error('Error loading official results:', err);
   }
+}
+
+// Apply official winners to the bracket structure so they advance through rounds
+function applyOfficialResultsToBracket() {
+  // Process each region's rounds
+  for (let rIdx = 0; rIdx < 4; rIdx++) {
+    const regionName = regions[rIdx].name.toLowerCase().replace(/\s+/g, '');
+    
+    // Round 1 -> Round 2
+    for (let game = 0; game < 8; game++) {
+      const gameId = `${regionName}-round1-game${game + 1}`;
+      const winner = officialResults.winners[gameId];
+      if (winner) {
+        const nextGame = Math.floor(game / 2);
+        const nextSlot = game % 2;
+        regions[rIdx].round2[nextGame][nextSlot] = winner;
+      }
+    }
+    
+    // Round 2 -> Round 3
+    for (let game = 0; game < 4; game++) {
+      const gameId = `${regionName}-round2-game${game + 1}`;
+      const winner = officialResults.winners[gameId];
+      if (winner) {
+        const nextGame = Math.floor(game / 2);
+        const nextSlot = game % 2;
+        regions[rIdx].round3[nextGame][nextSlot] = winner;
+      }
+    }
+    
+    // Round 3 -> Round 4
+    for (let game = 0; game < 2; game++) {
+      const gameId = `${regionName}-round3-game${game + 1}`;
+      const winner = officialResults.winners[gameId];
+      if (winner) {
+        const nextGame = Math.floor(game / 2);
+        const nextSlot = game % 2;
+        regions[rIdx].round4[nextGame][nextSlot] = winner;
+      }
+    }
+    
+    // Round 4 (Elite Eight) -> Final Four
+    const round4GameId = `${regionName}-round4-game1`;
+    const round4Winner = officialResults.winners[round4GameId];
+    if (round4Winner) {
+      regions[rIdx].elite8 = round4Winner;
+      
+      // Update Final Four slots based on region
+      if (rIdx === 0) { // South
+        finalFour.semis1[0] = round4Winner;
+      } else if (rIdx === 1) { // Midwest
+        finalFour.semis1[1] = round4Winner;
+      } else if (rIdx === 2) { // East
+        finalFour.semis2[0] = round4Winner;
+      } else if (rIdx === 3) { // West
+        finalFour.semis2[1] = round4Winner;
+      }
+    }
+  }
+  
+  // Semis -> Championship
+  const semis1Winner = officialResults.winners['semis1'];
+  if (semis1Winner) {
+    finalFour.championship[0] = semis1Winner;
+  }
+  
+  const semis2Winner = officialResults.winners['semis2'];
+  if (semis2Winner) {
+    finalFour.championship[1] = semis2Winner;
+  }
+  
+  // Championship -> Champion
+  const champWinner = officialResults.winners['championship'];
+  if (champWinner) {
+    finalFour.champion = champWinner;
+  }
+  
+  console.log('Applied official results to bracket structure');
 }
 
 // Load bracket setup from Firebase (teams and region names)
