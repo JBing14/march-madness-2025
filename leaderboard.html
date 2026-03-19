@@ -66,12 +66,12 @@
 
   <footer class="site-footer">
     <div class="footer-content">
-      <p><i class="fa fa-envelope"></i> Contact: <a href="/cdn-cgi/l/email-protection#77191416161f181807041a16131912040437101a161e1b5914181a"><span class="__cf_email__" data-cfemail="d0beb3b1b1b8bfbfa0a3bdb1b4beb5a3a390b7bdb1b9bcfeb3bfbd">[email&#160;protected]</span></a></p>
+      <p><i class="fa fa-envelope"></i> Contact: <a href="mailto:ncaahoopsmadness@gmail.com">ncaahoopsmadness@gmail.com</a></p>
       <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">&copy; 2025 March Madness Bracket Challenge. All rights reserved.</p>
     </div>
   </footer>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script>
@@ -109,3 +109,15 @@
             adminTicker.style.display = 'block';
           } else {
             adminTicker.style.display = 'none';
+          }
+        } else {
+          adminTicker.style.display = 'none';
+        }
+      } catch (err) {
+        console.log('Ticker not configured:', err);
+      }
+    });
+  </script>
+  <script type="module" src="leaderboard.js"></script>
+</body>
+</html>
