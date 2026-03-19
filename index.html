@@ -57,13 +57,13 @@
 
     <footer class="site-footer">
         <div class="footer-content">
-            <p><i class="fa fa-envelope"></i> Contact: <a href="mailto:ncaahoopsmadness@gmail.com">ncaahoopsmadness@gmail.com</a></p>
+            <p><i class="fa fa-envelope"></i> Contact: <a href="/cdn-cgi/l/email-protection#533d3032323b3c3c23203e32373d36202013343e323a3f7d303c3e"><span class="__cf_email__" data-cfemail="2b45484a4a4344445b58464a4f454e58586b4c464a424705484446">[email&#160;protected]</span></a></p>
             <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">&copy; 2025 March Madness Bracket Challenge. All rights reserved.</p>
         </div>
     </footer>
 
     <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script>
@@ -94,20 +94,9 @@
                         messages.forEach(msg => {
                             tickerHTML += `<span class="ticker-item">${msg}</span>`;
                         });
-                        tickerContent.innerHTML = tickerHTML + tickerHTML;
+                        tickerContent.innerHTML = tickerHTML;
                         adminTicker.style.display = 'block';
                     } else {
                         adminTicker.style.display = 'none';
                     }
                 } else {
-                    adminTicker.style.display = 'none';
-                }
-            } catch (err) {
-                console.log('Ticker not configured:', err);
-            }
-        });
-    </script>
-    <script src="script.js"></script>
-</body>
-</html>
-
