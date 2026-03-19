@@ -867,7 +867,7 @@ pre {
 
 .ticker-content {
   display: flex;
-  animation: scroll-ticker 40s linear infinite;
+  animation: scroll-ticker 45s linear infinite;
   white-space: nowrap;
 }
 
@@ -886,7 +886,7 @@ pre {
 
 .ticker-item {
   display: inline-block;
-  padding: 0 100px;
+  padding: 0 150px;
   color: #003087;
   font-weight: 700;
   font-size: 1.1em;
@@ -917,11 +917,11 @@ pre {
   
   .ticker-item {
     font-size: 0.9em;
-    padding: 0 80px;
+    padding: 0 120px;
   }
   
   .ticker-content {
-    animation-duration: 35s;
+    animation-duration: 40s;
   }
 }
 
