@@ -378,40 +378,6 @@ nav a:hover {
   }
 }
 
-/* Official Winners and Losers */
-.slot.official-winner {
-  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%) !important;
-  color: #003087 !important;
-  font-weight: bold !important;
-  border: 3px solid #FFD700 !important;
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
-  animation: winner-glow 2s ease-in-out infinite !important;
-}
-
-.slot.official-winner .winner-check {
-  color: #28a745;
-  font-weight: bold;
-  margin-left: 5px;
-  font-size: 1.2em;
-}
-
-.slot.official-loser {
-  background: #e0e0e0 !important;
-  color: #888 !important;
-  opacity: 0.6 !important;
-  text-decoration: line-through !important;
-  border: 1px solid #ccc !important;
-}
-
-@keyframes winner-glow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
-  }
-}
-
 /* Selected state */
 .slot.selected {
   background: #ff6200;
@@ -867,7 +833,7 @@ pre {
 
 .ticker-content {
   display: flex;
-  animation: scroll-ticker 45s linear infinite;
+  animation: scroll-ticker 25s linear infinite;
   white-space: nowrap;
 }
 
@@ -886,7 +852,7 @@ pre {
 
 .ticker-item {
   display: inline-block;
-  padding: 0 150px;
+  padding: 0 60px;
   color: #003087;
   font-weight: 700;
   font-size: 1.1em;
@@ -917,11 +883,11 @@ pre {
   
   .ticker-item {
     font-size: 0.9em;
-    padding: 0 120px;
+    padding: 0 40px;
   }
   
   .ticker-content {
-    animation-duration: 40s;
+    animation-duration: 20s;
   }
 }
 
