@@ -867,7 +867,7 @@ pre {
 
 .ticker-content {
   display: flex;
-  animation: scroll-ticker 60s linear infinite;
+  animation: scroll-ticker 40s linear infinite;
   white-space: nowrap;
 }
 
@@ -877,16 +877,16 @@ pre {
 
 @keyframes scroll-ticker {
   0% {
-    transform: translateX(0);
+    transform: translateX(100%);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(-100%);
   }
 }
 
 .ticker-item {
   display: inline-block;
-  padding: 0 300px;
+  padding: 0 100px;
   color: #003087;
   font-weight: 700;
   font-size: 1.1em;
@@ -917,11 +917,11 @@ pre {
   
   .ticker-item {
     font-size: 0.9em;
-    padding: 0 250px;
+    padding: 0 80px;
   }
   
   .ticker-content {
-    animation-duration: 50s;
+    animation-duration: 35s;
   }
 }
 
