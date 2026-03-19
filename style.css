@@ -867,9 +867,8 @@ pre {
 
 .ticker-content {
   display: flex;
-  animation: scroll-ticker 35s linear infinite;
+  animation: scroll-ticker 25s linear infinite;
   white-space: nowrap;
-  will-change: transform;
 }
 
 .ticker-content:hover {
@@ -877,17 +876,17 @@ pre {
 }
 
 @keyframes scroll-ticker {
-  from {
-    transform: translateX(0%);
+  0% {
+    transform: translateX(0);
   }
-  to {
+  100% {
     transform: translateX(-50%);
   }
 }
 
 .ticker-item {
   display: inline-block;
-  padding: 0 150px;
+  padding: 0 200px;
   color: #003087;
   font-weight: 700;
   font-size: 1.1em;
@@ -918,11 +917,11 @@ pre {
   
   .ticker-item {
     font-size: 0.9em;
-    padding: 0 100px;
+    padding: 0 150px;
   }
   
   .ticker-content {
-    animation-duration: 30s;
+    animation-duration: 20s;
   }
 }
 
