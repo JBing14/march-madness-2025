@@ -386,6 +386,7 @@ nav a:hover {
   border: 3px solid #FFD700 !important;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
   animation: winner-glow 2s ease-in-out infinite !important;
+  text-decoration: none !important;
 }
 
 .slot.official-winner .winner-check {
@@ -393,6 +394,7 @@ nav a:hover {
   font-weight: bold;
   margin-left: 5px;
   font-size: 1.2em;
+  text-decoration: none !important;
 }
 
 .slot.official-loser,
@@ -402,6 +404,8 @@ nav a:hover {
   color: #666 !important;
   opacity: 0.5 !important;
   text-decoration: line-through !important;
+  -webkit-text-decoration: line-through !important;
+  text-decoration-style: solid !important;
   border: 2px solid #999 !important;
   cursor: default !important;
   transform: none !important;
