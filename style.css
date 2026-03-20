@@ -193,6 +193,7 @@ nav a:hover {
   font-size: 0.95em;
   border-radius: 4px;
   font-weight: bold;
+  text-decoration: none !important;
 }
 
 /* MATCHES - Traditional Bracket Spacing */
@@ -310,6 +311,7 @@ nav a:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-decoration: none !important;
 }
 
 .slot.clickable {
