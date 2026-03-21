@@ -144,6 +144,56 @@
       <button id="exportPdf" class="btn btn-secondary">Export Leaderboard to PDF</button>
       <pre id="scoreStatus" class="status">No scoring run yet.</pre>
 
+      <!-- PAYOUTS MANAGEMENT -->
+      <h2 class="mt-4">Payouts Management</h2>
+      <div class="card mb-3">
+        <div class="card-body">
+          <h3>Payouts Page Control</h3>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="payoutsEnabled">
+            <label class="form-check-label" for="payoutsEnabled">
+              <strong>Enable Payouts Page</strong> (Make page visible in navigation)
+            </label>
+          </div>
+          
+          <h4>Add Payout Entry</h4>
+          <div class="row mb-3">
+            <div class="col-md-2">
+              <input type="text" id="payoutPlace" class="form-control" placeholder="1st Place">
+            </div>
+            <div class="col-md-4">
+              <input type="text" id="payoutWinner" class="form-control" placeholder="Winner Name">
+            </div>
+            <div class="col-md-2">
+              <input type="number" id="payoutAmount" class="form-control" placeholder="Amount">
+            </div>
+            <div class="col-md-3">
+              <input type="text" id="payoutNotes" class="form-control" placeholder="Tiebreaker notes (optional)">
+            </div>
+            <div class="col-md-1">
+              <button id="addPayoutBtn" class="btn btn-primary">Add</button>
+            </div>
+          </div>
+          
+          <h4>Current Payouts</h4>
+          <table class="table table-sm" id="payoutsPreviewTable">
+            <thead>
+              <tr>
+                <th>Place</th>
+                <th>Winner</th>
+                <th>Amount</th>
+                <th>Notes</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="payoutsPreview"></tbody>
+          </table>
+          
+          <button id="savePayoutsBtn" class="btn btn-success">Save & Publish Payouts</button>
+          <p id="payoutsStatus" class="status"></p>
+        </div>
+      </div>
+
       <!-- SUBMISSIONS -->
       <h2 class="mt-4">Bracket Submissions</h2>
       <p><strong>Total:</strong> <span id="count">0</span></p>
