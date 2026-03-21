@@ -27,7 +27,7 @@
     </div>
   </div>
 
-  <nav><a href="index.html">Submit Bracket</a> | <a href="leaderboard.html">Leaderboard</a> | <a href="rules.html">Rules & Payments</a> | <a href="admin.html" class="subtle">Admin</a></nav>
+  <nav id="mainNav"><a href="index.html">Submit Bracket</a> | <a href="leaderboard.html">Leaderboard</a> | <span id="payoutsNavLink"></span><a href="rules.html">Rules & Payments</a> | <a href="admin.html" class="subtle">Admin</a></nav>
 
   <div class="container my-4">
     <h1 class="text-center text-primary">March Madness Leaderboard</h1>
@@ -116,6 +116,16 @@
       } catch (err) {
         console.log('Ticker not configured:', err);
       }
+    });
+    
+    // Check if payouts page is enabled
+    tickerDb.collection('payouts').doc('settings').get().then(doc => {
+      const payoutsLink = document.getElementById('payoutsNavLink');
+      if (doc.exists && doc.data().enabled) {
+        payoutsLink.innerHTML = '<a href="payouts.html">Payouts</a> | ';
+      }
+    }).catch(err => {
+      console.log('Payouts not configured:', err);
     });
   </script>
   <script type="module" src="leaderboard.js"></script>
