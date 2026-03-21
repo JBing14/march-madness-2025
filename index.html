@@ -26,7 +26,7 @@
         </div>
     </div>
 
-    <nav><a href="index.html">Submit Bracket</a> | <a href="leaderboard.html">Leaderboard</a> | <a href="rules.html">Rules & Payments</a> | <a href="admin.html" class="subtle">Admin</a></nav>
+    <nav id="mainNav"><a href="index.html">Submit Bracket</a> | <a href="leaderboard.html">Leaderboard</a> | <span id="payoutsNavLink"></span><a href="rules.html">Rules & Payments</a> | <a href="admin.html" class="subtle">Admin</a></nav>
 
     <section id="user-form">
         <input type="text" id="name" placeholder="Your First and Last Name" required>
@@ -57,13 +57,13 @@
 
     <footer class="site-footer">
         <div class="footer-content">
-            <p><i class="fa fa-envelope"></i> Contact: <a href="mailto:ncaahoopsmadness@gmail.com">ncaahoopsmadness@gmail.com</a></p>
+            <p><i class="fa fa-envelope"></i> Contact: <a href="/cdn-cgi/l/email-protection#66080507070e090916150b07020803151526010b070f0a4805090b"><span class="__cf_email__" data-cfemail="4e202d2f2f2621213e3d232f2a202b3d3d0e29232f2722602d2123">[email&#160;protected]</span></a></p>
             <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">&copy; 2025 March Madness Bracket Challenge. All rights reserved.</p>
         </div>
     </footer>
 
     <!-- Firebase Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script>
@@ -106,8 +106,17 @@
                 console.log('Ticker not configured:', err);
             }
         });
+        
+        // Check if payouts page is enabled
+        tickerDb.collection('payouts').doc('settings').get().then(doc => {
+            const payoutsLink = document.getElementById('payoutsNavLink');
+            if (doc.exists && doc.data().enabled) {
+                payoutsLink.innerHTML = '<a href="payouts.html">Payouts</a> | ';
+            }
+        }).catch(err => {
+            console.log('Payouts not configured:', err);
+        });
     </script>
     <script src="script.js"></script>
 </body>
 </html>
-
