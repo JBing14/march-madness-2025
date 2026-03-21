@@ -1205,3 +1205,131 @@ newMessage.addEventListener('keypress', (e) => {
 
 // Initialize ticker on auth state change (already done in main auth listener, just add the call)
 // This will be called automatically when user logs in
+
+// ========== PAYOUTS MANAGEMENT ==========
+
+let currentPayouts = [];
+
+const payoutsEnabled = document.getElementById('payoutsEnabled');
+const payoutPlace = document.getElementById('payoutPlace');
+const payoutWinner = document.getElementById('payoutWinner');
+const payoutAmount = document.getElementById('payoutAmount');
+const payoutNotes = document.getElementById('payoutNotes');
+const addPayoutBtn = document.getElementById('addPayoutBtn');
+const payoutsPreview = document.getElementById('payoutsPreview');
+const savePayoutsBtn = document.getElementById('savePayoutsBtn');
+const payoutsStatus = document.getElementById('payoutsStatus');
+
+// Load existing payouts
+async function loadPayouts() {
+  try {
+    // Load settings
+    const settingsDoc = await getDoc(doc(db, 'payouts', 'settings'));
+    if (settingsDoc.exists()) {
+      payoutsEnabled.checked = settingsDoc.data().enabled || false;
+    }
+    
+    // Load data
+    const dataDoc = await getDoc(doc(db, 'payouts', 'data'));
+    if (dataDoc.exists() && dataDoc.data().payouts) {
+      currentPayouts = dataDoc.data().payouts;
+      renderPayoutsPreview();
+    }
+  } catch (err) {
+    console.error('Error loading payouts:', err);
+  }
+}
+
+// Render payouts preview table
+function renderPayoutsPreview() {
+  payoutsPreview.innerHTML = '';
+  
+  if (currentPayouts.length === 0) {
+    payoutsPreview.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No payouts added yet</td></tr>';
+    return;
+  }
+  
+  currentPayouts.forEach((payout, index) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${payout.place}</td>
+      <td>${payout.winner}</td>
+      <td>$${payout.amount}</td>
+      <td>${payout.notes || '-'}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="window.removePayout(${index})">Remove</button></td>
+    `;
+    payoutsPreview.appendChild(tr);
+  });
+}
+
+// Add payout entry
+addPayoutBtn.onclick = () => {
+  const place = payoutPlace.value.trim();
+  const winner = payoutWinner.value.trim();
+  const amount = payoutAmount.value.trim();
+  const notes = payoutNotes.value.trim();
+  
+  if (!place || !winner || !amount) {
+    alert('Please fill in Place, Winner, and Amount');
+    return;
+  }
+  
+  currentPayouts.push({
+    place,
+    winner,
+    amount: parseFloat(amount),
+    notes
+  });
+  
+  // Clear inputs
+  payoutPlace.value = '';
+  payoutWinner.value = '';
+  payoutAmount.value = '';
+  payoutNotes.value = '';
+  
+  renderPayoutsPreview();
+};
+
+// Remove payout entry
+window.removePayout = (index) => {
+  if (confirm('Remove this payout entry?')) {
+    currentPayouts.splice(index, 1);
+    renderPayoutsPreview();
+  }
+};
+
+// Save payouts to Firebase
+savePayoutsBtn.onclick = async () => {
+  try {
+    payoutsStatus.textContent = 'Saving...';
+    payoutsStatus.style.color = 'blue';
+    
+    // Save settings (enabled/disabled)
+    await setDoc(doc(db, 'payouts', 'settings'), {
+      enabled: payoutsEnabled.checked,
+      updatedAt: serverTimestamp(),
+      updatedBy: auth.currentUser.email
+    });
+    
+    // Save payout data
+    await setDoc(doc(db, 'payouts', 'data'), {
+      payouts: currentPayouts,
+      updatedAt: serverTimestamp(),
+      updatedBy: auth.currentUser.email
+    });
+    
+    payoutsStatus.textContent = '✓ Payouts saved and published!';
+    payoutsStatus.style.color = 'green';
+  } catch (err) {
+    console.error('Error saving payouts:', err);
+    payoutsStatus.textContent = '✗ Error saving payouts';
+    payoutsStatus.style.color = 'red';
+  }
+};
+
+// Load payouts when user is authenticated
+auth.onAuthStateChanged(user => {
+  if (user) {
+    loadPayouts();
+  }
+});
