@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -1307,14 +1307,14 @@ savePayoutsBtn.onclick = async () => {
     // Save settings (enabled/disabled)
     await setDoc(doc(db, 'payouts', 'settings'), {
       enabled: payoutsEnabled.checked,
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date(),
       updatedBy: auth.currentUser.email
     });
     
     // Save payout data
     await setDoc(doc(db, 'payouts', 'data'), {
       payouts: currentPayouts,
-      updatedAt: serverTimestamp(),
+      updatedAt: new Date(),
       updatedBy: auth.currentUser.email
     });
     
