@@ -859,6 +859,8 @@ scoreBtn.onclick = async () => {
     return;
   }
   
+  console.log('SCORING WITH THESE BONUS GAMES:', officialResults.bonusGames);
+  
   scoreStatus.textContent = 'Scoring brackets...';
   scoreStatus.style.color = 'blue';
   
@@ -938,30 +940,70 @@ function scoreBracket(picks, results) {
   }
   
   if (results.bonusGames) {
+    console.log('Processing bonus games:', results.bonusGames);
     ['bonus1', 'bonus2', 'bonus3', 'bonus4'].forEach(bonusKey => {
       const bonusGame = results.bonusGames[bonusKey];
       if (!bonusGame) return;
       
-      const [region, round, game] = bonusGame.split('-');
+      console.log(`Checking ${bonusKey}: ${bonusGame}`);
       
-      if (region === 'semis1' || region === 'semis2' || region === 'championship') {
-        const pick = picks.finalFour?.[region]?.game1?.pick;
-        if (pick === results.winners[bonusGame]) {
-          total += 5;
-          breakdown.bonus += 5;
+      // Check if this is a slot-specific bonus (e.g., "midwest-round3-game1-slot2")
+      const parts = bonusGame.split('-');
+      const hasSlot = parts.length === 4 && parts[3].startsWith('slot');
+      
+      if (hasSlot) {
+        // Slot-specific bonus
+        const region = parts[0];
+        const round = parts[1];
+        const game = parts[2];
+        const slot = parts[3]; // e.g., "slot2"
+        
+        if (region === 'semis1' || region === 'semis2' || region === 'championship') {
+          const slotTeam = picks.finalFour?.[region]?.[game]?.[slot];
+          const winnerKey = `${region}-${game}`;
+          if (slotTeam === results.winners[winnerKey]) {
+            total += 5;
+            breakdown.bonus += 5;
+          }
+        } else {
+          // Find the region by matching the normalized name
+          const regionIdx = picks.regions.findIndex(r => {
+            const rName = r.name ? r.name.toLowerCase().replace(/\s+/g, '') : '';
+            return rName === region;
+          });
+          
+          if (regionIdx !== -1) {
+            const slotTeam = picks.regions[regionIdx]?.[round]?.[game]?.[slot];
+            const winnerKey = `${region}-${round}-${game}`;
+            if (slotTeam === results.winners[winnerKey]) {
+              total += 5;
+              breakdown.bonus += 5;
+            }
+          }
         }
       } else {
-        // Find the region by matching the normalized name
-        const regionIdx = picks.regions.findIndex(r => {
-          const rName = r.name ? r.name.toLowerCase().replace(/\s+/g, '') : '';
-          return rName === region;
-        });
+        // Game winner bonus (original logic)
+        const [region, round, game] = bonusGame.split('-');
         
-        if (regionIdx !== -1) {
-          const pick = picks.regions[regionIdx]?.[round]?.[game]?.pick;
+        if (region === 'semis1' || region === 'semis2' || region === 'championship') {
+          const pick = picks.finalFour?.[region]?.game1?.pick;
           if (pick === results.winners[bonusGame]) {
             total += 5;
             breakdown.bonus += 5;
+          }
+        } else {
+          // Find the region by matching the normalized name
+          const regionIdx = picks.regions.findIndex(r => {
+            const rName = r.name ? r.name.toLowerCase().replace(/\s+/g, '') : '';
+            return rName === region;
+          });
+          
+          if (regionIdx !== -1) {
+            const pick = picks.regions[regionIdx]?.[round]?.[game]?.pick;
+            if (pick === results.winners[bonusGame]) {
+              total += 5;
+              breakdown.bonus += 5;
+            }
           }
         }
       }
