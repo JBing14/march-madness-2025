@@ -200,7 +200,7 @@ function renderFinalFour() {
   const semis1Match = document.createElement('div');
   semis1Match.className = 'match final-four-match';
   
-  const semis1Winner = officialResults.winners['semis1'];
+  const semis1Winner = officialResults.winners['semis1-game1'];
   
   for (let s = 0; s < 2; s++) {
     const slot = document.createElement('div');
@@ -233,7 +233,7 @@ function renderFinalFour() {
   const semis2Match = document.createElement('div');
   semis2Match.className = 'match final-four-match';
   
-  const semis2Winner = officialResults.winners['semis2'];
+  const semis2Winner = officialResults.winners['semis2-game1'];
   
   for (let s = 0; s < 2; s++) {
     const slot = document.createElement('div');
@@ -270,7 +270,7 @@ function renderFinalFour() {
   leftChampSlot.className = 'slot';
   leftChampSlot.textContent = finalFour.championship[0] || '';
   
-  const champWinner = officialResults.winners['championship'];
+  const champWinner = officialResults.winners['championship-game1'];
   
   if (finalFour.championship[0] && champWinner) {
     if (finalFour.championship[0] === champWinner) {
