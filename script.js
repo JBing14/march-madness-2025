@@ -623,18 +623,18 @@ function applyOfficialResultsToBracket() {
   }
   
   // Semis -> Championship
-  const semis1Winner = officialResults.winners['semis1'];
+  const semis1Winner = officialResults.winners['semis1-game1'];
   if (semis1Winner) {
     finalFour.championship[0] = semis1Winner;
   }
   
-  const semis2Winner = officialResults.winners['semis2'];
+  const semis2Winner = officialResults.winners['semis2-game1'];
   if (semis2Winner) {
     finalFour.championship[1] = semis2Winner;
   }
   
   // Championship -> Champion
-  const champWinner = officialResults.winners['championship'];
+  const champWinner = officialResults.winners['championship-game1'];
   if (champWinner) {
     finalFour.champion = champWinner;
   }
